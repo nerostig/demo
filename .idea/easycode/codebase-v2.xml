@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.obiscr.chatgpt.settings.EasyCodeState">
+    <option name="projectFiles" value="$PROJECT_DIR$/demo/demo/build/reports/problems/problems-report.html;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/domain/NetworkTopology.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/domain/Sensor.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/pipeline/SensorInput.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/pipeline/TopologyInput.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/DemoApplication.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/TopologyController.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/main/kotlin/com/example/demo/vv.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/src/test/kotlin/com/example/demo/DemoApplicationTests.kt;C:/Users/Utilizador/Desktop/PF/demo/demo/build.gradle.kts;C:/Users/Utilizador/Desktop/PF/demo/demo/HELP.md;C:/Users/Utilizador/Desktop/PF/demo/demo/settings.gradle.kts" />
+  </component>
+</project>
