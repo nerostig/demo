@@ -10,7 +10,7 @@ data class Schedule(
 )
 
 data class DutyCycleParameter(
-    val value: Int
+    val value: Double
 )
 
 

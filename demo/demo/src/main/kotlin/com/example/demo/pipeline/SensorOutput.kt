@@ -7,7 +7,7 @@ data class SensorOutput(
 
 data class SensorResultOutput(
     val id: String,
-    val dutyCycleParameter: Int?
+    val dutyCycleParameter: Double?
 )
 
 data class LinkOutput(

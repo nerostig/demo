@@ -6,6 +6,7 @@ import com.example.demo.pipeline.TopologyGroupRequest
 import com.example.demo.pipeline.TopologyRequest
 import com.example.demo.pipeline.TopologyScheduleResponse
 import com.example.demo.pipeline.toDomainGroups
+import computeScheduless
 import org.springframework.stereotype.Service
 
 class InvalidTopologyException : RuntimeException()
@@ -22,7 +23,7 @@ class TopologyService(
         try {
             val topology = request.toDomain()
 
-            val schedules = computeSchedules(topology)
+            val schedules = computeScheduless(topology)
 
             val scheduledTopology =
                 planner.applySchedules(topology, schedules)
@@ -39,40 +40,28 @@ class TopologyService(
     }
 
     fun planGroups(request: TopologyGroupRequest): TopologyScheduleResponse {
-        TODO()
-//        try {
-//            val (topology, baseParameters) =
-//                request.toDomainGroups()
-//
-//            val schedules =
-//                computeSchedulesForGroups(topology, baseParameters)
-//
-//            val scheduledTopology =
-//                planner.applySchedules(topology, schedules)
-//
-//            repository.save(scheduledTopology)
-//
-//            return scheduledTopology.toResponse()
-//
-//        } catch (ex: IllegalArgumentException) {
-//            throw InvalidTopologyException()
-//        } catch (ex: Exception) {
-//            throw SchedulingFailedException()
-//        }
+        try {
+            val topology =
+                request.toDomainGroups()
+
+            val schedules =
+                computeScheduless(topology)
+
+            val scheduledTopology =
+                planner.applySchedules(topology, schedules)
+
+            repository.save(scheduledTopology)
+
+            return scheduledTopology.toResponse()
+
+        } catch (ex: IllegalArgumentException) {
+            throw InvalidTopologyException()
+        } catch (ex: Exception) {
+            throw SchedulingFailedException()
+        }
     }
 
-    fun plannn(request: TopologyRequest): TopologyScheduleResponse {
 
-        val topology = request.toDomain()
-        val schedules = computeSchedules(topology)
-
-        val scheduledTopology =
-            planner.applySchedules(topology, schedules)
-
-        repository.save(scheduledTopology)
-
-        return scheduledTopology.toResponse()
-    }
 //
 //    fun planGroupsss(request: TopologyGroupRequest): TopologyScheduleResponse {
 //

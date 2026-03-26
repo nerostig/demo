@@ -9,30 +9,38 @@ data class TopologyGroupRequest(
 )
 
 
-fun TopologyGroupRequest.toDomainGroups(): Pair<NetworkTopology, Map<Sensor, DutyCycleParameter>> {
+fun TopologyGroupRequest.toDomainGroups(): NetworkTopology {
 
-    val sensorMap = sensorGroups
-        .flatMap { group ->
-            group.sensorIds.map { id ->
-                id to Sensor(id, group.desiredDutyCycle, group.tolerance)
+    // Criar sensores únicos a partir dos grupos
+    val sensorMap: Map<String, Sensor> =
+        sensorGroups
+            .flatMap { group ->
+                group.sensorIds.map { id ->
+                    id to Sensor(
+                        id = id,
+                        desiredDutyCycle = group.desiredDutyCycle,
+                        tolerance = group.tolerance
+                    )
+                }
             }
-        }
-        .associate { it }
+            .toMap()
 
-    val adjacency = mutableMapOf<Sensor, MutableList<Sensor>>()
-    sensorMap.values.forEach { adjacency[it] = mutableListOf() }
+    // Inicializar lista de adjacências
+    val adjacency: MutableMap<Sensor, MutableList<Sensor>> = mutableMapOf()
+    sensorMap.values.forEach { sensor ->
+        adjacency[sensor] = mutableListOf()
+    }
 
+    // Criar ligações bidirecionais
     links.forEach { link ->
-        val a = sensorMap[link.from]!!
-        val b = sensorMap[link.to]!!
-        adjacency[a]?.add(b)
-        adjacency[b]?.add(a)
+        val fromSensor = sensorMap[link.from]
+            ?: error("Sensor '${link.from}' não existe")
+        val toSensor = sensorMap[link.to]
+            ?: error("Sensor '${link.to}' não existe")
+
+        adjacency[fromSensor]!!.add(toSensor)
+        adjacency[toSensor]!!.add(fromSensor)
     }
 
-    // Map de duty cycles inicial, cada sensor com o do grupo
-    val initialDutyCycles = sensorMap.values.associateWith {
-        DutyCycleParameter(it.desiredDutyCycle!!)
-    }
-
-    return NetworkTopology(adjacency) to initialDutyCycles
+    return NetworkTopology(adjacency)
 }
