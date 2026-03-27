@@ -6,7 +6,8 @@ import com.example.demo.pipeline.TopologyGroupRequest
 import com.example.demo.pipeline.TopologyRequest
 import com.example.demo.pipeline.TopologyScheduleResponse
 import com.example.demo.pipeline.toDomainGroups
-import computeScheduless
+import computeSchedulesOptimized
+//import computeScheduless
 import org.springframework.stereotype.Service
 
 class InvalidTopologyException : RuntimeException()
@@ -20,45 +21,48 @@ class TopologyService(
 ) {
 
     fun plan(request: TopologyRequest): TopologyScheduleResponse {
-        try {
-            val topology = request.toDomain()
-
-            val schedules = computeScheduless(topology)
-
-            val scheduledTopology =
-                planner.applySchedules(topology, schedules)
-
-            repository.save(scheduledTopology)
-
-            return scheduledTopology.toResponse()
-
-        } catch (ex: IllegalArgumentException) {
-            throw InvalidTopologyException()
-        } catch (ex: Exception) {
-            throw SchedulingFailedException()
-        }
+        TODO()
     }
+//        try {
+//            val topology = request.toDomain()
+//
+//            val schedules = computeSchedulesOptimized(topology)
+//
+//            val scheduledTopology =
+//                planner.applySchedules(topology, schedules)
+//
+//            repository.save(scheduledTopology)
+//
+//            return scheduledTopology.toResponse()
+//
+//        } catch (ex: IllegalArgumentException) {
+//            throw InvalidTopologyException()
+//        } catch (ex: Exception) {
+//            throw SchedulingFailedException()
+//        }
+//    }
 
     fun planGroups(request: TopologyGroupRequest): TopologyScheduleResponse {
-        try {
-            val topology =
-                request.toDomainGroups()
-
-            val schedules =
-                computeScheduless(topology)
-
-            val scheduledTopology =
-                planner.applySchedules(topology, schedules)
-
-            repository.save(scheduledTopology)
-
-            return scheduledTopology.toResponse()
-
-        } catch (ex: IllegalArgumentException) {
-            throw InvalidTopologyException()
-        } catch (ex: Exception) {
-            throw SchedulingFailedException()
-        }
+        TODO()
+//        try {
+//            val topology =
+//                request.toDomainGroups()
+//
+//            val schedules =
+//                computeSchedulesOptimized(topology)
+//
+//            val scheduledTopology =
+//                planner.applySchedules(topology, schedules)
+//
+//            repository.save(scheduledTopology)
+//
+//            return scheduledTopology.toResponse()
+//
+//        } catch (ex: IllegalArgumentException) {
+//            throw InvalidTopologyException()
+//        } catch (ex: Exception) {
+//            throw SchedulingFailedException()
+//        }
     }
 
 
