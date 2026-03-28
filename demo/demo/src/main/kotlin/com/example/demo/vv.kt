@@ -43,7 +43,7 @@ fun areCoprimePercentages(a: Double, b: Double): Boolean {
 }
 
 // ===================== DOMÍNIO =====================
-fun generateCandidates(sensor: Sensor, step: Double = 0.05): List<Double> {
+fun generateCandidatesff(sensor: Sensor, step: Double = 0.05): List<Double> {
     val min = sensor.desiredDutyCycle - sensor.tolerance
     val max = (sensor.desiredDutyCycle + sensor.tolerance)
     val values = mutableListOf<Double>()
@@ -55,6 +55,19 @@ fun generateCandidates(sensor: Sensor, step: Double = 0.05): List<Double> {
    // println("$sensor->${values} ->${(100/values.first()).toInt()}")
     return values
 }
+
+fun generateCandidates(sensor: Sensor, step: Double = 0.05): List<Int> {
+    val min = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
+    val max = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
+    val values = mutableListOf<Int>()
+    var v = min
+    while (v <= max) {
+        values.add(v)
+        v += 1
+    }
+    return values
+}
+
 
 // ===================== ÁRVORE DE DECISÃO =====================
 data class TreeNode(
@@ -84,128 +97,19 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
         return bestAssignment
     }
 
-    fun buildTresse(
-        sensor: Sensor,
-        assignment: MutableMap<Sensor, Double>,
-        domains: MutableMap<Sensor, MutableList<Double>>,
-        currentCost: Double,
-       // parentNode: TreeNode?
-    ) {
-       /// if(currentCost>bestCost)return
-
-        val domain = domains[sensor] ?: return
-
-        for (value in domain.toList()) {
-            val newDomains = domains.mapValues { it.value.toMutableList() }.toMutableMap()
-            assignment[sensor] = value
-            var valid = true
-
-           // println("$domains")
-
-            println("Tentando sensor ${sensor.id} = $value")
-            println("Assignment atual: ${assignment.map { "${it.key.id}=${it.value}" }}\n")
-            //println("vizinhos ->${topology.neighbors(sensor)}")
-            
-            for (neighbor in topology.neighbors(sensor)) { //C->A
-                println(" sensor Atual ${sensor.id} e vizinho ${neighbor.id}")
-
-                if (assignment.containsKey(neighbor)) {
-                    val result2 = areCoprimePercentages(value, assignment[neighbor]!!)
-
-                    println(
-                        " coprimalidade MAs com um vizinho com valor Já defenido: " +
-                                "SensorAtual=${sensor.id} (value=$value) ↔ " +
-                                "Vizinho DEFENIDO=${neighbor.id} (candidate=${assignment[neighbor]!!}) => $result2"
-                    )
-                    if (!areCoprimePercentages(value, assignment[neighbor]!!)) {
-                        valid = false
-                        break
-                    }
-
-                } else {
-                    /*
-                    val remainingNeigbors=(topology.neighbors(sensor)).filter { assignment.containsKey(neighbor)==false }.size
-
-                        var countNOTValids = 0
-
-                        newDomains.filter{it.key !in assignment.keys}[neighbor]?.removeIf {
-                             val result = areCoprimePercentages(value, it)
-
-                        println(
-                            " coprimalidade: " +
-                                    "SensorAtual=${sensor.id} (value=$value) ↔ " +
-                                    "Vizinho=${neighbor.id} (candidate=$it) => $result"
-                       )
-                            //B->15
-                            if (!areCoprimePercentages(value, it)) {
-                                countNOTValids += 1
-                            }
-                            !areCoprimePercentages(value, it)
-
-                        }
-                        if (countNOTValids == remainingNeigbors) { //B=(C e E)   B->C
-                            valid = false
-                            break
-                        }
-                    */
-                    val hasAtLeastOneValid = newDomains[neighbor]!!
-                        .any { areCoprimePercentages(value, it) }
-
-                    println(
-                        "Vizinho ${neighbor.id} ainda livre → " +
-                                "existe valor compatível? $hasAtLeastOneValid"
-                    )
-
-                    if (!hasAtLeastOneValid) {
-                        valid = false
-                        break
-                    }
-
-                }
-            }
-
-            if (valid) {
-               // val node = TreeNode(sensor, value)
-               // parentNode?.children?.add(node)
-
-                // próximo sensor não atribuído: escolha heurística -> vizinhos ainda não atribuídos
-                val unassignedNeighbors = topology.neighbors(sensor).filter { it !in assignment }
-                if (unassignedNeighbors.isNotEmpty()) {
-                    for (neighbor in unassignedNeighbors) {
-                        buildTree(neighbor, assignment, domains, currentCost + abs(value - sensor.desiredDutyCycle), )
-                    }
-                } else {
-                    // todos atribuídos ou sem vizinhos não atribuídos, verifica se todos sensores têm valor
-                    if (assignment.size == topology.sensors().size) {
-                        val totalCost = currentCost + abs(value - sensor.desiredDutyCycle)
-                        if (totalCost < bestCost) {
-                            bestCost = totalCost
-                            bestAssignment = assignment.toMap()
-                        }
-                    } else {
-                        // ainda há sensores isolados, pega o próximo sensor não atribuído da lista
-                        val nextSensor = topology.sensors().firstOrNull { it !in assignment }
-                        if (nextSensor != null) {
-                            buildTree(nextSensor, assignment, newDomains, currentCost + abs(value - sensor.desiredDutyCycle), )
-                        }
-                    }
-                }
-            }
-
-            assignment.remove(sensor) // backtrack
-        }
-    }
-
     private fun buildTree(
         sensor: Sensor,
         assignment: MutableMap<Sensor, Double>,
-        domains: MutableMap<Sensor, MutableList<Double>>,
+        domains: MutableMap<Sensor, MutableList<Int>>,
         currentCost: Double
     ) {
         val domain = domains[sensor] ?: return
 
         for (value in domain.toList()) {
-            assignment[sensor] = value
+
+            val percentage = round(100.0 / value)   // converte para duty cycle em %
+
+            assignment[sensor] = percentage//value
             println("Tentando sensor ${sensor.id} = $value")
             println("Assignment atual: ${assignment.map { "${it.key.id}=${it.value}" }}\n")
 
@@ -214,7 +118,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
             // Verificação de vizinhos já atribuídos
             for (neighbor in topology.neighbors(sensor)) {
                 if (assignment.containsKey(neighbor)) {
-                    val coprime = areCoprimePercentages(value, assignment[neighbor]!!)
+                    val coprime = areCoprimePercentages(percentage, assignment[neighbor]!!)
                     println("  Coprimalidade com vizinho já definido ${neighbor.id}=${assignment[neighbor]} → $coprime")
                     if (!coprime) valid = false
                 }
@@ -231,7 +135,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
             if (unassignedNeighbors.isNotEmpty()) {
                 allNeighborsImpossible = unassignedNeighbors.all { neighbor ->
                     val neighborDomain = domains[neighbor]!!
-                    val hasCompatible = neighborDomain.any { areCoprimePercentages(value, it) }
+                    val hasCompatible = neighborDomain.any { areCoprimePercentages(percentage, round(100.0 / it)) }
                     println("  Vizinho ${neighbor.id} ainda livre → existe valor compatível? $hasCompatible")
                     !hasCompatible
                 }
