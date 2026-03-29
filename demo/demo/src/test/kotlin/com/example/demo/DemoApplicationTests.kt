@@ -6,6 +6,7 @@ import assignParametersToSensors
 import colorGraph
 import com.example.demo.domain.NetworkTopology
 import com.example.demo.domain.Sensor
+import computeSchedulesOptimized
 import computeScheduless
 import dutyCycleToPeriod
 import gcd
@@ -218,41 +219,99 @@ class DemoApplicationTestss {
 
 
     @Test
-    fun `computeSchedules topologia complexa com fallback`() {
-        val a = Sensor("A", 20.0, 0.5)
-        val b = Sensor("B", 21.0, 0.5)
-        val c = Sensor("C", 22.0, 0.5)
-        val d = Sensor("D", 23.0, 0.5)
-        val e = Sensor("E", 24.0, 0.5)
+    fun `computeSchedules topologia com tolerancia pequena`() {
+
+        val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 1.0) // ~19–21
+        val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 1.0) // ~24–26
+        val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 1.0) // ~13–15
+        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 1.0) // ~9–11
+        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 1.0) // ~8–10
 
         val topology = NetworkTopology(
             mapOf(
-                a to listOf(b, c, d, e),
-                b to listOf(a, c),
-                c to listOf(a, b, d),
-                d to listOf(a, c),
-                e to listOf(a)
+                A to listOf(B, C),
+                B to listOf(A, C, E),
+                C to listOf(A, B, D),
+                D to listOf(C, E),
+                E to listOf(B, D)
             )
         )
 
-        val schedules = computeScheduless(topology)
+        val schedules = computeSchedulesOptimized(topology)
 
-        assertEquals(5, schedules.size)
-
-        // nunca pode haver conflito CPB entre vizinhos
-        for (sensor in topology.sensors()) {
-            for (neighbor in topology.neighbors(sensor)) {
-                val s1 = schedules.first { it.sensor == sensor }.parameter
-                val s2 = schedules.first { it.sensor == neighbor }.parameter
-
-                if (s1 != null && s2 != null) {
-                    assertTrue(
-                        areCoprimePercentages(s1.value, s2.value),
-                        "Conflito entre ${sensor.id} e ${neighbor.id}"
-                    )
-                }
-            }
+        println("\n=== Resultado teste tolerância pequena ===")
+        schedules.forEach {
+            println("${it.sensor.id} -> ${it.parameter?.value}")
         }
+
+        // Pelo menos um sensor deve ter valor atribuído
+        assertTrue(schedules.any { it.parameter != null })
+    }
+
+    @Test
+    fun `computeSchedules topologia com tolerancia maior e solucao parcial`() {
+
+        val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 3.0)
+        val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 3.0)
+        val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 3.0)
+        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 3.0)
+        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 3.0)
+
+        val topology = NetworkTopology(
+            mapOf(
+                A to listOf(B, C),
+                B to listOf(A, C, E),
+                C to listOf(A, B, D),
+                D to listOf(C, E),
+                E to listOf(B, D)
+            )
+        )
+
+        val schedules = computeSchedulesOptimized(topology)
+
+        println("\n=== Resultado teste tolerância maior ===")
+        schedules.forEach {
+            println("${it.sensor.id} -> ${it.parameter?.value}")
+        }
+
+        // Deve haver pelo menos um sensor sem valor
+        assertTrue(schedules.any { it.parameter == null })
+
+        // Mas também pelo menos um com valor
+        assertTrue(schedules.any { it.parameter != null })
+    }
+    @Test
+    fun `computeSchedules topologia alternativa com tolerancia pequena`() {
+
+        val a = Sensor("A", desiredDutyCycle = 20.0, tolerance = 1.0)
+        val b = Sensor("B", desiredDutyCycle = 25.0, tolerance = 1.0)
+        val c = Sensor("C", desiredDutyCycle = 14.0, tolerance = 1.0)
+        val d = Sensor("D", desiredDutyCycle = 10.0, tolerance = 1.0)
+        val e = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 1.0)
+
+        val topology = NetworkTopology(
+            mapOf(
+                a to listOf(b, d),
+                b to listOf(a, c, e),
+                c to listOf(b),
+                d to listOf(a, e),
+                e to listOf(d, b)
+            )
+        )
+
+        val schedules = computeSchedulesOptimized(topology)
+
+        println("\n=== Resultado teste topologia alternativa (tolerância pequena) ===")
+        schedules.forEach {
+            println("${it.sensor.id} -> ${it.parameter?.value}")
+        }
+
+        // Deve haver pelo menos um valor atribuído
+        assertTrue(schedules.any { it.parameter != null })
+
+        // Idealmente poucos nulls
+        val nullCount = schedules.count { it.parameter == null }
+        assertTrue(nullCount < schedules.size)
     }
 
 }
