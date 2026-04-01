@@ -1,13 +1,12 @@
 package com.example.demo
 
+import DutyCycleTreeOptimizer
 import areCoprime
 import areCoprimePercentages
-import assignParametersToSensors
-import colorGraph
+
 import com.example.demo.domain.NetworkTopology
 import com.example.demo.domain.Sensor
 import computeSchedulesOptimized
-import computeScheduless
 import dutyCycleToPeriod
 import gcd
 import org.junit.jupiter.api.Test
@@ -153,29 +152,77 @@ class DemoApplicationTestss {
     // ======================
 
     @Test
-    fun `computeSchedules simples com dois sensores`() {
-        val a = Sensor("A", 50.0, 0.0)
-        val b = Sensor("B", 33.0, 0.0)
+    fun testSolucaoCompletaComTolerancias() {
+
+//        val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 2.0)
+//        val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 2.0)
+//        val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 2.0)
+//        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 1.5)
+//        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 1.5)
+
+//        val A = Sensor("A", desiredDutyCycle = 19.0, tolerance = 1.5)
+//        val B = Sensor("B", desiredDutyCycle = 24.0, tolerance = 1.5)
+//        val C = Sensor("C", desiredDutyCycle = 13.0, tolerance = 1.0)
+//        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.9)
+//        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 0.9)
+
+        val A = Sensor("A", desiredDutyCycle = 18.0, tolerance = 2.0)  // ~ [16,20]
+        val B = Sensor("B", desiredDutyCycle = 24.0, tolerance = 2.0)  // ~ [22,26]
+        val C = Sensor("C", desiredDutyCycle = 15.0, tolerance = 1.5)  // ~ [14,17]
+        val D = Sensor("D", desiredDutyCycle = 12.0, tolerance = 1.0)  // ~ [11,13]
+        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 1.0)  // ~ [8,10]
 
         val topology = NetworkTopology(
             mapOf(
-                a to listOf(b),
-                b to listOf(a)
+                A to listOf(B, C),
+                B to listOf(A, C, E),
+                C to listOf(A, B, D),
+                D to listOf(C, E),
+                E to listOf(B, D)
             )
         )
 
-        val schedules = computeScheduless(topology)
+        val optimizer = DutyCycleTreeOptimizer(topology, step = 1.0)
+        val result = optimizer.optimize()
 
-        assertEquals(2, schedules.size)
-        println("schedules-> $schedules")
+        println("Resultado teste 1:")
+        result!!.forEach { (s, v) ->
+            println("${s.id} -> $v")
+        }
 
-        val pa = schedules.first { it.sensor == a }.parameter!!.value
-        val pb = schedules.first { it.sensor == b }.parameter!!.value
+        // 🔒 Garantia: nenhum null
+        assertTrue(result.values.all { it != null })
+    }
 
-        println("schedules-> $pa")
-        println("schedules-> $pb")
+    @Test
+    fun testSolucaoParcialComNulls() {
 
-        assertTrue(areCoprimePercentages(pa, pb))
+        val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 0.5)
+        val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 0.5)
+        val C = Sensor("C", desiredDutyCycle = 20.0, tolerance = 0.5) // ⚠ igual a A
+        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.5)
+        val E = Sensor("E", desiredDutyCycle = 10.0, tolerance = 0.5)
+
+        val topology = NetworkTopology(
+            mapOf(
+                A to listOf(B, C),
+                B to listOf(A, C, E),
+                C to listOf(A, B, D),
+                D to listOf(C, E),
+                E to listOf(B, D)
+            )
+        )
+
+        val optimizer = DutyCycleTreeOptimizer(topology, step = 1.0)
+        val result = optimizer.optimize()
+
+        println("Resultado teste 2:")
+        result!!.forEach { (s, v) ->
+            println("${s.id} -> $v")
+        }
+
+        //  Espera-se pelo menos um null
+        assertTrue(result.values.any { it == null })
     }
 
     /*
@@ -184,38 +231,38 @@ class DemoApplicationTestss {
     D — E
     * */
 
-    @Test
-    fun `computeSchedules topologia media`() {
-        val a = Sensor("A", 20.0, 1.0)
-        val b = Sensor("B", 25.0, 1.0)
-        val c = Sensor("C", 33.0, 1.0)
-        val d = Sensor("D", 50.0, 1.0)
-        val e = Sensor("E", 40.0, 1.0)
-
-        val topology = NetworkTopology(
-            mapOf(
-                a to listOf(b, d),
-                b to listOf(a, c, e),
-                c to listOf(b),
-                d to listOf(a, e),
-                e to listOf(d, b)
-            )
-        )
-
-        val schedules = computeScheduless(topology)
-
-        assertEquals(5, schedules.size)
-        assertTrue(schedules.all { it.parameter != null })
-
-        // verificar CPB apenas entre vizinhos
-        for (sensor in topology.sensors()) {
-            for (neighbor in topology.neighbors(sensor)) {
-                val p1 = schedules.first { it.sensor == sensor }.parameter!!.value
-                val p2 = schedules.first { it.sensor == neighbor }.parameter!!.value
-                assertTrue(areCoprimePercentages(p1, p2))
-            }
-        }
-    }
+//    @Test
+//    fun `computeSchedules topologia media`() {
+//        val a = Sensor("A", 20.0, 1.0)
+//        val b = Sensor("B", 25.0, 1.0)
+//        val c = Sensor("C", 33.0, 1.0)
+//        val d = Sensor("D", 50.0, 1.0)
+//        val e = Sensor("E", 40.0, 1.0)
+//
+//        val topology = NetworkTopology(
+//            mapOf(
+//                a to listOf(b, d),
+//                b to listOf(a, c, e),
+//                c to listOf(b),
+//                d to listOf(a, e),
+//                e to listOf(d, b)
+//            )
+//        )
+//
+//        val schedules = computeScheduless(topology)
+//
+//        assertEquals(5, schedules.size)
+//        assertTrue(schedules.all { it.parameter != null })
+//
+//        // verificar CPB apenas entre vizinhos
+//        for (sensor in topology.sensors()) {
+//            for (neighbor in topology.neighbors(sensor)) {
+//                val p1 = schedules.first { it.sensor == sensor }.parameter!!.value
+//                val p2 = schedules.first { it.sensor == neighbor }.parameter!!.value
+//                assertTrue(areCoprimePercentages(p1, p2))
+//            }
+//        }
+//    }
 
 
     @Test

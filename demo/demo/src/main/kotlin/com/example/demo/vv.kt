@@ -61,8 +61,10 @@ fun generateCandidatesff(sensor: Sensor, step: Double = 0.05): List<Double> {
 }
 
 fun generateCandidates(sensor: Sensor, step: Double = 0.05): List<Int> {
-    val min = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
-    val max = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
+   // val min = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
+    //val max = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
+    val min = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
+    val max = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
     val values = mutableListOf<Int>()
     var v = min
     while (v <= max) {
@@ -430,6 +432,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
             for (neighbor in topology.neighbors(sensor)) {
                 if (assignment.containsKey(neighbor)) {
                     val coprime = areCoprimePercentages(percentage, assignment[neighbor]!!)
+
                     if (!coprime) {
                         valid = false
                         break
@@ -450,19 +453,25 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
             if (unassignedNeighbors.isNotEmpty()) {
                 for (neighborSensor in unassignedNeighbors) {
                     val childNode = Node(sensor = neighborSensor, parent = node)
+
                     node.children.add(childNode)
+
                     buildTree(childNode, domains, assignment, newCost)
                 }
             } else {
                 // Backtracking em cadeia usando node.parent
                 var currentNode: Node? = node
                 while (currentNode?.parent != null) {
+
                     val siblings = topology.neighbors(currentNode.parent!!.sensor)
                         .filter { it !in assignment && it != currentNode.sensor }
+
                     if (siblings.isNotEmpty()) {
                         for (siblingSensor in siblings) {
                             val siblingNode = Node(sensor = siblingSensor, parent = currentNode.parent)
+
                             currentNode.parent.children.add(siblingNode)
+
                             buildTree(siblingNode, domains, assignment, newCost)
                         }
                         break
@@ -508,7 +517,7 @@ fun main() {
     // ===================== SENSORES =====================
     val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 0.0) // 100/20 = 5
     val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 0.0) // 100/25 = 4
-    val C = Sensor("C", desiredDutyCycle = 15.0, tolerance = 0.0) // 100/15 ≈ 6
+    val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 0.0) // 100/15 ≈ 6
     val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.0) // 100/10 = 10
     //val D = Sensor("D", desiredDutyCycle = 9.09, tolerance = 0.0)  // período ≈ 11 → coprimo com A e C
     val E = Sensor("E", desiredDutyCycle = 9.0, tolerance = 0.0)  // 100/9 ≈ 11
