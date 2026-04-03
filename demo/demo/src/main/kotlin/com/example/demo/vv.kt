@@ -48,7 +48,7 @@ fun generateCandidatesff(sensor: Sensor, step: Double = 0.05): List<Double> {
 }
 
 fun generateCandidates(sensor: Sensor, step: Double = 0.05): List<Int> {
-   // val min = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
+    // val min = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
     //val max = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
     val min = (100 / (sensor.desiredDutyCycle + sensor.tolerance)).toInt()
     val max = (100 / (sensor.desiredDutyCycle - sensor.tolerance)).toInt()
@@ -106,21 +106,29 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
         cost: Double
     ) {
         val sensors = topology.sensors()
-        val nullCount = sensors.size - assignment.size
+       // val nullCount = sensors.size - assignment.size
 
         println(">> Avaliar solução parcial")
         println("   Assignment atual: ${assignment.map { "${it.key.id}=${it.value}" }}")
-        println("   Nulls = $nullCount | Custo = $cost")
-        println("   Melhor até agora: nulls=$bestNullCount custo=$bestCost")
+        println("   Nulls =  | Custo = $cost")
+        println("   Melhor até agora: nulls=$ custo=$bestCost")
 
-        val better =
-            (nullCount < bestNullCount )|| (nullCount == bestNullCount && cost < bestCost)
+        //val better = cost < bestCost
+
+        val rmsCost = sqrt(cost / assignment.size.toDouble())
+
+        val better=rmsCost < bestCost
+
 
         println("   E melhor? -> $better")
+        if(bestAssignment==null && assignment.size==sensors.size){
+            bestCost = rmsCost//cost
+            bestAssignment = sensors.associateWith { assignment[it] }
 
-       // if (better) {
-            bestNullCount = nullCount
-            bestCost = cost
+        }
+
+         if (better) {
+            bestCost = rmsCost//cost
             bestAssignment = sensors.associateWith { assignment[it] }
 
             println(
@@ -128,7 +136,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
                         "    nulls=$bestNullCount custo=$bestCost\n" +
                         "    solução=${bestAssignment!!.map { "${it.key.id}=${it.value}" }}\n"
             )
-       // }
+         }
     }
 
 
@@ -140,90 +148,23 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
         var percentage: Double? = null
     )
 
-    private fun buildTreecc(node: Node, domains: MutableMap<Sensor, MutableList<Int>>, assignment: MutableMap<Sensor, Double>, currentCost: Double) {
-        val sensor = node.sensor
-        val domain = domains[sensor] ?: return
-
-        println("\n--> Explorar sensor ${sensor.id}")
-        println("    Assignment à entrada: ${assignment.map { "${it.key.id}=${it.value}" }}")
-
-        for (period in domain.toList()) {
-            val percentage = round(100.0 / period)
-            assignment[sensor] = percentage
-            node.percentage = percentage
-
-            var valid = true
-            for (neighbor in topology.neighbors(sensor)) {
-                if (assignment.containsKey(neighbor)) {
-                    val coprime = areCoprimePercentages(percentage, assignment[neighbor]!!)
-
-                    if (!coprime) {
-                        valid = false
-                        break
-                    }
-                }
-            }
-            if (!valid) {
-                assignment.remove(sensor)
-                node.percentage = null
-                continue
-            }
-
-            val newCost = currentCost + abs(percentage - sensor.desiredDutyCycle)
-            evaluateSolution(assignment, newCost)
-
-            val unassignedNeighbors = topology.neighbors(sensor).filter { it !in assignment }
-
-            if (unassignedNeighbors.isNotEmpty()) {
-                for (neighborSensor in unassignedNeighbors) {
-                    val childNode = Node(sensor = neighborSensor, parent = node)
-
-                    node.children.add(childNode)
-
-                    buildTree(childNode, domains, assignment, newCost)
-                }
-            } else {
-                var currentNode: Node? = node
-                while (currentNode?.parent != null) {
-
-                    val siblings = topology.neighbors(currentNode.parent!!.sensor)
-                        .filter { it !in assignment && it != currentNode.sensor }
-
-                    if (siblings.isNotEmpty()) {
-                        for (siblingSensor in siblings) {
-                            val siblingNode = Node(sensor = siblingSensor, parent = currentNode.parent)
-
-                            currentNode.parent.children.add(siblingNode)
-
-                            buildTree(siblingNode, domains, assignment, newCost)
-                        }
-                        break
-                    }
-                    currentNode = currentNode.parent
-                }
-            }
-
-            assignment.remove(sensor)
-            node.percentage = null
-        }
-    }
-
     private fun buildTree(node: Node, domains: MutableMap<Sensor, MutableList<Int>>, assignment: MutableMap<Sensor, Double>, currentCost: Double) {
         val sensor = node.sensor
         val domain = domains[sensor] ?: return
 
         println("\n--> Explorar sensor ${sensor.id}")
         println("    Assignment à entrada: ${assignment.map { "${it.key.id}=${it.value}" }}")
-
-        val sortedDomain = domain.sortedBy { period ->
+            val sortedDomain = domain.sortedBy { period ->
             val percentage = round(100.0 / period)
             topology.neighbors(sensor).count { neighbor ->
                 neighbor !in assignment && !areCoprimePercentages(percentage, assignment[neighbor] ?: 0.0)
             }
         }
+//
+//
+//        for (period in sortedDomain /*domain.toList()*/) {
 
-
-        for (period in domain.toList()) {
+        for (period in sortedDomain /*domain.toList()*/) {
             val percentage = round(100.0 / period)
             assignment[sensor] = percentage
             node.percentage = percentage
@@ -245,32 +186,39 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
                 continue
             }
 
-             val newCost = currentCost + abs(percentage - sensor.desiredDutyCycle)
+
+//                println("currentCost1 $currentCost")
+//            println("percentage $percentage")
+//            println("sensor.desiredDutyCycle ${sensor.desiredDutyCycle}")
+
+
+
+            //val newCost = currentCost + abs(percentage - sensor.desiredDutyCycle)
+
+//            val error = percentage - sensor.desiredDutyCycle
+//            val errorSquare = currentCost + (error * error)   // ∑ erro²
+//
+//            val newCost = currentCost + sqrt(errorSquare / assignment.size.toDouble())
 
             val error = percentage - sensor.desiredDutyCycle
-            //val newCost = currentCost + (error * error)   // ∑ erro²
-
-            val rmsPartial = sqrt(newCost / assignment.size.toDouble())
-
-            val nullCount = topology.sensors().size - assignment.size
-            println("antigo -> $bestCost , novo -> $newCost")
+            val newSquaredCost = currentCost + (error * error)
+            val rmsPartial = sqrt(newSquaredCost / assignment.size.toDouble())
 
 
+            if (/*newCost*/ rmsPartial > bestCost ) {
 
-            if (newCost >= bestCost && bestCost!=0.0) {
-                println("eeeeeeeeeeeeeeeedcccc")
+                println("Deistiu $rmsPartial ; $bestCost  | $ ")
                 assignment.remove(sensor)
                 node.percentage = null
                 continue
             }
 
-            evaluateSolution(assignment, rmsPartial)
+            evaluateSolution(assignment, newSquaredCost)
 
-            val unassignedNeighbors = topology.neighbors(sensor).filter { it !in assignment }
-
-//            val unassignedNeighbors = topology.neighbors(sensor)
-//                .filter { it !in assignment }
-//                .sortedBy { domains[it]?.size ?: Int.MAX_VALUE }
+            //val unassignedNeighbors = topology.neighbors(sensor).filter { it !in assignment }
+            val unassignedNeighbors = topology.neighbors(sensor)
+                .filter { it !in assignment }
+                .sortedBy { domains[it]?.size ?: Int.MAX_VALUE }
 
             if (unassignedNeighbors.isNotEmpty()) {
                 for (neighborSensor in unassignedNeighbors) {
@@ -278,7 +226,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
 
                     node.children.add(childNode)
 
-                    buildTree(childNode, domains, assignment, newCost)
+                    buildTree(childNode, domains, assignment, newSquaredCost)
                 }
             } else {
                 var currentNode: Node? = node
@@ -293,7 +241,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
 
                             currentNode.parent.children.add(siblingNode)
 
-                            buildTree(siblingNode, domains, assignment, newCost)
+                            buildTree(siblingNode, domains, assignment, newSquaredCost)
                         }
                         break
                     }
@@ -305,6 +253,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
             node.percentage = null
         }
     }
+
 
 }
 
@@ -327,7 +276,7 @@ fun main() {
     // ===================== SENSORES =====================
     val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 0.0) // 100/20 = 5
     val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 0.0) // 100/25 = 4
-    val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 0.0) // 100/15 ≈ 6
+    val C = Sensor("C", desiredDutyCycle = 15.0, tolerance = 0.0) // 100/15 ≈ 6
     val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.0) // 100/10 = 10
     //val D = Sensor("D", desiredDutyCycle = 9.09, tolerance = 0.0)  // período ≈ 11 → coprimo com A e C
     val E = Sensor("E", desiredDutyCycle = 9.0, tolerance = 0.0)  // 100/9 ≈ 11
@@ -347,7 +296,7 @@ fun main() {
         mapOf(
             A to listOf(B, D),
             B to listOf(A, C, E),
-            C to listOf(B, D),
+            C to listOf(B),
             D to listOf(A, E),
             E to listOf(B)
         )
