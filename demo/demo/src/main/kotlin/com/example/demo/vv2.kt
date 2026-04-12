@@ -1,3 +1,36 @@
+fun main() {
+
+    val topology = generateRandomTopology(
+        sensorCount = 50,
+        maxNeighbors = 4,
+        dutyCycleRange = 5.0..40.0,
+        tolerance = 1.0
+        //allCoprime=true// opcional, para testes reproduzíveis
+    )
+//    topology.sensors().forEach { sensor ->
+//        val neighbors = topology.neighbors(sensor)
+//            .joinToString(", ") { it.id }
+//
+//        println("${sensor.id} -> [$neighbors] ->${sensor.desiredDutyCycle} sensortolerance-> ${sensor.tolerance}")
+//    }
+
+
+    val optimizer = DutyCycleTreeOptimizer(topology)
+
+    val result = optimizer.optimize()
+
+    println("Resultado:")
+    result?.forEach { (sensor, value) ->
+        println("${sensor.id} = $value")
+    }
+//    topology.sensors().forEach { sensor ->
+//        val neighbors = topology.neighbors(sensor)
+//            .joinToString(", ") { it.id }
+//
+//        println("${sensor.id} -> [$neighbors] ->${sensor.desiredDutyCycle} sensortolerance-> ${sensor.tolerance}")
+//    }
+}
+
 //import com.example.demo.domain.NetworkTopology
 //import com.example.demo.domain.Sensor
 //import com.example.demo.pipeline.DutyCycleParameter
