@@ -1,6 +1,8 @@
 package com.example.demo
 
 import DutyCycleTreeOptimizer
+import GlobalNogoodStore
+import SearchContext
 import areCoprime
 import areCoprimePercentages
 
@@ -79,13 +81,15 @@ class DemoApplicationTestss {
     @Test
     fun `50 e 33_3 sao coprimos`() {
         // períodos: 2 e 3 → gcd = 1
-        assertTrue(areCoprimePercentages(50.0, 33.3))
+       val ctx = SearchContext(GlobalNogoodStore())//, cutoff = Int.MAX_VALUE)
+        assertTrue(areCoprimePercentages(50.0, 33.3,ctx))
     }
 
     @Test
     fun `50 e 25 nao sao coprimos`() {
         // períodos: 2 e 4 → gcd = 2
-        assertFalse(areCoprimePercentages(50.0, 25.0))
+        val ctx = SearchContext(GlobalNogoodStore()) //cutoff = Int.MAX_VALUE)
+        assertFalse(areCoprimePercentages(50.0, 25.0,ctx))
     }
 
     @Test
@@ -93,14 +97,16 @@ class DemoApplicationTestss {
         // períodos: 3 e 4 → gcd = 1? NÃO
         // 100/37.5 = 2.66 → 3
         // 100/25 = 4
-        assertTrue(areCoprimePercentages(37.5, 25.0))
-        assertFalse(areCoprimePercentages(50.0, 25.0))
+        val ctx = SearchContext(GlobalNogoodStore())//, cutoff = Int.MAX_VALUE)
+        assertTrue(areCoprimePercentages(37.5, 25.0,ctx))
+        assertFalse(areCoprimePercentages(50.0, 25.0,ctx))
     }
 
     @Test
     fun `33_3 e 66_6 nao sao coprimos`() {
+        val ctx = SearchContext(GlobalNogoodStore())//, cutoff = Int.MAX_VALUE)
         // períodos: 3 e 2 → gcd = 1? sim
-        assertTrue(areCoprimePercentages(33.3, 66.6))
+        assertTrue(areCoprimePercentages(33.3, 66.6,ctx))
     }
 
     // ======================
@@ -360,6 +366,75 @@ class DemoApplicationTestss {
         // Idealmente poucos nulls
         val nullCount = schedules.count { it.parameter == null }
         assertTrue(nullCount < schedules.size)
+    }
+
+    @Test
+    fun `ABC todos coprimos`() {
+
+        val a = Sensor("A", desiredDutyCycle = 50.0, tolerance = 0.5)
+        val b = Sensor("B", desiredDutyCycle = 33.3, tolerance = 0.5)
+        val c = Sensor("C", desiredDutyCycle = 20.0, tolerance = 0.5)
+
+        val topology = NetworkTopology(
+            mapOf(
+                a to listOf(b),
+                b to listOf(a, c),
+                c to listOf(b)
+            )
+        )
+
+        val schedules = computeSchedulesOptimized(topology)
+
+        val nulls = schedules.count { it.parameter == null }
+
+        // Espera-se solução completa
+        assertEquals(0, nulls)
+    }
+
+    @Test
+    fun `B e C nao coprimos mas A e B sao`() {
+
+        val a = Sensor("A", desiredDutyCycle = 33.3, tolerance = 0.5)
+        val b = Sensor("B", desiredDutyCycle = 50.0, tolerance = 0.5)
+        val c = Sensor("C", desiredDutyCycle = 25.0, tolerance = 0.5)
+
+        val topology = NetworkTopology(
+            mapOf(
+                a to listOf(b),
+                b to listOf(a, c),
+                c to listOf(b)
+            )
+        )
+
+        val schedules = computeSchedulesOptimized(topology)
+
+        val assigned = schedules.filter { it.parameter != null }
+
+        // Pelo menos A e B devem ser atribuídos
+        assertTrue(assigned.size >= 2)
+    }
+
+    @Test
+    fun `A nao coprimo com B e B nao coprimo com C`() {
+
+        val a = Sensor("A", desiredDutyCycle = 50.0, tolerance = 0.0)
+        val b = Sensor("B", desiredDutyCycle = 50.0, tolerance = 0.0)
+        val c = Sensor("C", desiredDutyCycle = 50.0, tolerance = 0.0)
+
+        val topology = NetworkTopology(
+            mapOf(
+                a to listOf(b),
+                b to listOf(a, c),
+                c to listOf(b)
+            )
+        )
+
+        val schedules = computeSchedulesOptimized(topology)
+
+        val nulls = schedules.count { it.parameter == null }
+        println(nulls)
+
+        assertTrue(nulls == 2)
     }
 
 }

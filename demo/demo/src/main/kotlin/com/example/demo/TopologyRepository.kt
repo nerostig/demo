@@ -6,9 +6,12 @@ import com.example.demo.domain.Sensor
 
 interface TopologyRepository {
 
-    fun save (ScheduledNetworkTopology: ScheduledNetworkTopology)
+    fun save (ScheduledNetworkTopology: ScheduledNetworkTopology):Int
 
     fun findById(id: Int): ScheduledNetworkTopology?
+    fun update(id: Int, topology: ScheduledNetworkTopology)
 
-    fun findAll(): List<ScheduledNetworkTopology>
+    fun findAll():  Map<Int, ScheduledNetworkTopology>
+    fun delete(id: Int)
+
 }

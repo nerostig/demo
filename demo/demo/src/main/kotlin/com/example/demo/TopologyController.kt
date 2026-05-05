@@ -1,11 +1,16 @@
 package com.example.demo
 
 import com.example.demo.pipeline.Problem
+import com.example.demo.pipeline.ScheduledTopologyOutput
 import com.example.demo.pipeline.TopologyGroupRequest
 import com.example.demo.pipeline.TopologyRequest
 import com.example.demo.pipeline.TopologyScheduleResponse
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -15,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 ///5xx
 
 @RestController
-@RequestMapping("/api/topolgyRequest")
+@RequestMapping("/api/topology")
 class TopologyController (
      private val service:TopologyService
 ){
@@ -31,11 +36,38 @@ class TopologyController (
 //        return service.planGroups(request)
 //    }
 
+    @DeleteMapping("/{id}")
+    fun deleteTopology(@PathVariable id: Int): ResponseEntity<Any> =
+        try {
+            service.delete(id)
+            ResponseEntity.noContent().build()
+        } catch (ex: TopologyNotFoundException) {
+            Problem.response(404, Problem.topologyNotFound)
+        } catch (ex: Exception) {
+            Problem.response(500, Problem.internalServerError)
+        }
+
+    @PutMapping("/{id:\\d+}")
+    fun updateTopology(
+        @PathVariable id: Int,
+        @RequestBody request: TopologyRequest
+    ): ResponseEntity<Any> =
+        try {
+            ResponseEntity.ok(service.updateAndReplan(id, request))
+        } catch (ex: TopologyNotFoundException) {
+            Problem.response(404, Problem.topologyNotFound)
+        } catch (ex: InvalidTopologyException) {
+            Problem.response(400, Problem.invalidTopology)
+        } catch (ex: SchedulingFailedException) {
+            Problem.response(500, Problem.schedulingFailed)
+        }
+
     @PostMapping("/implement")
     fun execute(
         @RequestBody request: TopologyRequest
     ): ResponseEntity<*> =
         try {
+            println("fff $request")
             ResponseEntity.ok(service.plan(request))
         } catch (ex: InvalidTopologyException) {
             Problem.response(400, Problem.invalidTopology)
@@ -62,6 +94,19 @@ class TopologyController (
         } catch (ex: Exception) {
             Problem.response(500, Problem.internalServerError)
         }
+
+
+    @GetMapping("/{id}")
+    fun findById(@PathVariable id: Int): ResponseEntity<Any> =
+        try {
+            ResponseEntity.ok(service.findById(id))
+        }catch (ex: TopologyNotFoundException) {
+            Problem.response(404, Problem.topologyNotFound)
+        }
+
+    @GetMapping("/all")
+    fun findAll(): ResponseEntity<List<ScheduledTopologyOutput>> =
+        ResponseEntity.ok(service.findAll())
 
 
 }

@@ -1,12 +1,14 @@
 fun main() {
 
     val topology = generateRandomTopology(
-        sensorCount = 50,
+        sensorCount = 30,
         maxNeighbors = 4,
         dutyCycleRange = 5.0..40.0,
-        tolerance = 1.0
-        //allCoprime=true// opcional, para testes reproduzíveis
+        tolerance = 1.0,
+        allCoprime=true// opcional, para testes reproduzíveis
     )
+//
+//    Exception in thread "main" java.lang.OutOfMemoryError: Java heap space: failed reallocation of scalar replaced objects
 //    topology.sensors().forEach { sensor ->
 //        val neighbors = topology.neighbors(sensor)
 //            .joinToString(", ") { it.id }

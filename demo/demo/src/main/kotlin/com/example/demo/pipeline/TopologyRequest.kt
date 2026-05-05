@@ -8,32 +8,36 @@ import kotlin.collections.forEach
 
 data class TopologyRequest(
     val sensors: List<SensorInput>,
-    val links:List<Links>
+    val adjacency: Map<String, List<String>>
+
 
 ){
     fun toDomain(): NetworkTopology {
-        val sensorMap=
-            sensors.associate{it.id to Sensor(it.id,it.desiredDutyCycle,it.tolerance)
-            }
 
-        val vertex= mutableMapOf<Sensor, MutableList<Sensor>>()
-
-        sensorMap.values.forEach {
-            vertex[it]=mutableListOf()
+        val sensorMap = sensors.associate {
+            it.id to Sensor(it.id,it.x,it.y, it.desiredDutyCycle, it.tolerance)
         }
 
-        links.forEach {
-            val a = sensorMap[it.from]!!
-            val b =sensorMap[it.to]!!
+        val vertex = mutableMapOf<Sensor, MutableList<Sensor>>()
 
-            vertex[a]?.add(b)
-            vertex[b]?.add(a)
+        sensorMap.values.forEach {
+            vertex[it] = mutableListOf()
+        }
 
+        adjacency.forEach { (fromId, neighborsIds) ->
+
+            val from = sensorMap[fromId]
+                ?: error("Sensor $fromId não existe")
+
+            neighborsIds.forEach { toId ->
+                val to = sensorMap[toId]
+                    ?: error("Sensor $toId não existe")
+
+                vertex[from]!!.add(to)
+            }
         }
 
         return NetworkTopology(vertex)
-
-
     }
 
 

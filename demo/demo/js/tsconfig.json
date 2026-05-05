@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "jsx": "react",
+    "esModuleInterop": true,
+    "target": "ES5",
+    "lib": ["DOM", "ES2019", "DOM.Iterable"],
+
+    "types": ["vite/client", "playwright", "node"]
+  }
+}

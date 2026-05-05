@@ -5,42 +5,53 @@ import com.example.demo.domain.Sensor
 
 data class TopologyGroupRequest(
     val sensorGroups: List<SensorGroupInput>,
-    val links: List<Links>
+    val adjacency: Map<String, List<String>>
 )
 
 
 fun TopologyGroupRequest.toDomainGroups(): NetworkTopology {
 
-    // Criar sensores únicos a partir dos grupos
-    val sensorMap: Map<String, Sensor> =
-        sensorGroups
-            .flatMap { group ->
-                group.sensorIds.map { id ->
-                    id to Sensor(
-                        id = id,
-                        desiredDutyCycle = group.desiredDutyCycle,
-                        tolerance = group.tolerance
-                    )
-                }
+//    val sensorMap = sensorGroups
+//        .flatMap { group ->
+//            group.sensorIds.map { id ->
+//                id to Sensor(id, group.desiredDutyCycle, group.tolerance)
+//            }
+//        }
+//        .toMap()
+
+
+    val sensorMap = sensorGroups
+        .flatMap { group ->
+            group.sensors.map { s ->
+                s.id to Sensor(
+                    id = s.id,
+                    desiredDutyCycle = group.desiredDutyCycle,
+                    tolerance = group.tolerance,
+                    x = s.x,
+                    y = s.y
+                )
             }
-            .toMap()
+        }
+        .toMap()
 
-    // Inicializar lista de adjacências
-    val adjacency: MutableMap<Sensor, MutableList<Sensor>> = mutableMapOf()
-    sensorMap.values.forEach { sensor ->
-        adjacency[sensor] = mutableListOf()
+    val adjacencyMap: MutableMap<Sensor, MutableList<Sensor>> = mutableMapOf()
+
+    sensorMap.values.forEach {
+        adjacencyMap[it] = mutableListOf()
     }
 
-    // Criar ligações bidirecionais
-    links.forEach { link ->
-        val fromSensor = sensorMap[link.from]
-            ?: error("Sensor '${link.from}' não existe")
-        val toSensor = sensorMap[link.to]
-            ?: error("Sensor '${link.to}' não existe")
+    adjacency.forEach { (fromId, neighbors) ->
 
-        adjacency[fromSensor]!!.add(toSensor)
-        adjacency[toSensor]!!.add(fromSensor)
+        val from = sensorMap[fromId]
+            ?: error("Sensor '$fromId' não existe")
+
+        neighbors.forEach { toId ->
+            val to = sensorMap[toId]
+                ?: error("Sensor '$toId' não existe")
+
+            adjacencyMap[from]!!.add(to)
+        }
     }
 
-    return NetworkTopology(adjacency)
+    return NetworkTopology(adjacencyMap)
 }

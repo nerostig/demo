@@ -10,6 +10,9 @@ class Problem(
 
         const val MEDIA_TYPE = "application/problem+json"
 
+        val topologyNotFound = Problem("Topology not found"
+        )
+
         fun response(
             status: Int,
             problem: Problem

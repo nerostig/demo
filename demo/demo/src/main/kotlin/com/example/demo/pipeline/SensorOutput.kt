@@ -7,6 +7,8 @@ data class SensorOutput(
 
 data class SensorResultOutput(
     val id: String,
+    val x:Int?,
+    val y:Int?,
     val dutyCycleParameter: Double?
 )
 

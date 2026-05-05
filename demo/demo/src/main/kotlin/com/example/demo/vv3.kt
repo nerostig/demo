@@ -1,3 +1,268 @@
+
+
+//
+//    private fun buildTreecc(node: Node, domains: MutableMap<Sensor, MutableList<Int>>, assignment: MutableMap<Sensor, Double>, currentCost: Double) {
+//        val sensor = node.sensor
+//        val domain = domains[sensor] ?: return
+//
+//        println("\n--> Explorar sensor ${sensor.id}")
+//        println("    Assignment à entrada: ${assignment.map { "${it.key.id}=${it.value}" }}")
+//
+//
+//
+//        val newDomains = domains.mapValues { it.value.toMutableList() }.toMutableMap()
+////        val sortedDomain = domain.sortedWith(compareByDescending<Int> { period ->
+////            val percentage = round(100.0 / period)
+////            // Conta quantas opções compatíveis sobram para os vizinhos
+////            topology.neighbors(sensor)
+////                .filter { it !in assignment }
+////                .sumOf { neighbor ->
+////                    val neighborDomain = newDomains[neighbor] ?: emptyList()
+////                    neighborDomain.count { neighborValue ->
+////                        areCoprimePercentages(percentage, round(100.0 / neighborValue))
+////                    }
+////                }
+////        }.thenBy { it }) // quebra empates preferindo period menor
+//        val sortedDomain = domain.sortedWith(compareBy<Int> { period ->
+//            val percentage = round(100.0 / period)
+//            // conta quantos valores nos vizinhos seriam removidos
+//            topology.neighbors(sensor)
+//                .filter { it !in assignment }
+//                .sumOf { neighbor ->
+//                    domains[neighbor]!!.count { neighborValue ->
+//                        !areCoprimePercentages(percentage, round(100.0 / neighborValue))
+//                    }
+//                }
+//        })
+//
+//        for (period in sortedDomain /*domain.toList()*/) {
+//            val percentage = round(100.0 / period)
+//            assignment[sensor] = percentage
+//            node.percentage = percentage
+//
+//            val error = percentage - sensor.desiredDutyCycle
+//            val newSquaredCost = currentCost + (error * error)
+//            val rmsPartial = sqrt(newSquaredCost / assignment.size.toDouble())
+//
+//
+//            if (/*newCost*/ rmsPartial > bestCost ) {
+//
+//               // println("Deistiu $rmsPartial ; $bestCost  | $ ")
+//                assignment.remove(sensor)
+//                node.percentage = null
+//                continue
+//            }
+//
+//
+//            // Verificação local coprimalidade
+//            var valid = true
+//            for (neighbor in topology.neighbors(sensor)) {
+//                if (assignment.containsKey(neighbor)) {
+//                    val coprime = areCoprimePercentages(percentage, assignment[neighbor]!!)
+//
+//
+//
+//                    if (!coprime) {
+//                        valid = false
+//                        break
+//                    }
+//                }
+//            }
+//            if (!valid) {
+//                assignment.remove(sensor)
+//                node.percentage = null
+//                continue
+//            }
+//
+//            topology.neighbors(sensor)
+//                .filter { it !in assignment }
+//                .forEach { neighbor ->
+//                    newDomains[neighbor] = newDomains[neighbor]!!
+//                        .filter { neighborValue ->
+//                            areCoprimePercentages(percentage, round(100.0 / neighborValue))
+//                        }.toMutableList()
+//                  //  println("newDomains $newDomains")
+//                }
+//
+//            evaluateSolution(assignment, newSquaredCost)
+//
+//            //val unassignedNeighbors = topology.neighbors(sensor).filter { it !in assignment }
+////
+////            val unassignedNeighbors = topology.neighbors(sensor)
+////                .filter { it !in assignment }
+////                .sortedBy { domains[it]?.size ?: Int.MAX_VALUE }
+//
+//            val unassignedNeighbors = topology.neighbors(sensor)
+//                .filter { it !in assignment }
+//                .sortedWith(compareBy<Sensor> { domains[it]?.size ?: Int.MAX_VALUE } // MRV
+//                    .thenByDescending { topology.neighbors(it).count { n -> n !in assignment } }) // Degree
+//
+//
+//            if (unassignedNeighbors.isNotEmpty()) {
+//
+//                for (neighborSensor in unassignedNeighbors) {
+//                    val childNode = Node(sensor = neighborSensor, parent = node)
+//
+//                    node.children.add(childNode)
+//
+//
+//                    buildTree(childNode, /*domains*/newDomains, assignment, newSquaredCost)
+//                }
+//            } else {
+//                // Backtracking em cadeia usando node.parent
+//                var currentNode: Node? = node
+//                while (currentNode?.parent != null) {
+//
+//                    val siblings = topology.neighbors(currentNode.parent!!.sensor)
+//                        .filter { it !in assignment && it != currentNode.sensor }
+//
+//                    if (siblings.isNotEmpty()) {
+//                        for (siblingSensor in siblings) {
+//                            val siblingNode = Node(sensor = siblingSensor, parent = currentNode.parent)
+//
+//                            currentNode.parent.children.add(siblingNode)
+//
+//                            buildTree(siblingNode, /*domains*/newDomains, assignment, newSquaredCost)
+//                        }
+//                        break
+//                    }
+//                    currentNode = currentNode.parent
+//                }
+//            }
+//
+//            assignment.remove(sensor)
+//            node.percentage = null
+//        }
+//    }
+
+/*
+    private fun buildTree(
+        node: Node,
+        domains: MutableMap<Sensor, MutableList<Int>>,
+        assignment: MutableMap<Sensor, Double>,
+        currentCost: Double
+    ) {
+        val sensor = node.sensor
+        val domain = domains[sensor] ?: return
+
+        println("\n--> Explorar sensor ${sensor.id}")
+        println("    Assignment à entrada: ${assignment.map { "${it.key.id}=${it.value}" }}")
+
+        // Ordenar domínios priorizando opções que dão mais compatibilidade com vizinhos
+//        val sortedDomain = domain.sortedWith(compareByDescending<Int> { period ->
+//            val percentage = round(100.0 / period)
+//            topology.neighbors(sensor)
+//                .filter { it !in assignment }
+//                .sumOf { neighbor ->
+//                    val neighborDomain = domains[neighbor] ?: emptyList()
+//                    neighborDomain.count { neighborValue ->
+//                        areCoprimePercentages(percentage, round(100.0 / neighborValue))
+//                    }
+//                }
+//        }.thenBy { it }) // desempate preferindo período menor
+
+        val sortedDomain = domain.sortedWith(compareBy<Int> { period ->
+            val percentage = round(100.0 / period)
+            // conta quantos valores nos vizinhos seriam removidos
+            topology.neighbors(sensor)
+                .filter { it !in assignment }
+                .sumOf { neighbor ->
+                    domains[neighbor]!!.count { neighborValue ->
+                        !areCoprimePercentages(percentage, round(100.0 / neighborValue))
+                    }
+                }
+        })
+
+        for (period in sortedDomain) {
+            val percentage = round(100.0 / period)
+            assignment[sensor] = percentage
+            node.percentage = percentage
+
+            // custo parcial
+            val error = percentage - sensor.desiredDutyCycle
+            val newSquaredCost = currentCost + (error * error)
+            val rmsPartial = sqrt(newSquaredCost / assignment.size.toDouble())
+
+            // poda pelo melhor custo conhecido
+            if (rmsPartial > bestCost) {
+                assignment.remove(sensor)
+                node.percentage = null
+                continue
+            }
+
+            // verificação coprimalidade local
+            val valid = topology.neighbors(sensor)
+                .filter { it in assignment }
+                .all { neighbor -> areCoprimePercentages(percentage, assignment[neighbor]!!) }
+
+            if (!valid) {
+                assignment.remove(sensor)
+                node.percentage = null
+                continue
+            }
+
+            // Forward-checking: atualizar domínios de vizinhos não atribuídos
+            val backup = mutableMapOf<Sensor, List<Int>>()
+            topology.neighbors(sensor)
+                .filter { it !in assignment }
+                .forEach { neighbor ->
+                    backup[neighbor] = domains[neighbor]!!.toList() // guardar estado antigo
+                    domains[neighbor] = domains[neighbor]!!
+                        .filter { neighborValue ->
+                            areCoprimePercentages(percentage, round(100.0 / neighborValue))
+                        }.toMutableList()
+                }
+
+            // Avaliar solução parcial
+            evaluateSolution(assignment, newSquaredCost)
+
+            // Explorar vizinhos não atribuídos
+//            val unassignedNeighbors = topology.neighbors(sensor)
+//                .filter { it !in assignment }
+//                .sortedBy { domains[it]?.size ?: Int.MAX_VALUE }
+            val unassignedNeighbors = topology.neighbors(sensor)
+                .filter { it !in assignment }
+                .sortedWith(compareBy<Sensor> { domains[it]?.size ?: Int.MAX_VALUE } // MRV
+                    .thenByDescending { topology.neighbors(it).count { n -> n !in assignment } }) // Degree
+
+            for (neighborSensor in unassignedNeighbors) {
+                val childNode = Node(sensor = neighborSensor, parent = node)
+                node.children.add(childNode)
+                buildTree(childNode, domains, assignment, newSquaredCost)
+            }
+
+            // rollback domínios após explorar filhos
+            backup.forEach { (neighbor, oldDomain) ->
+                domains[neighbor] = oldDomain.toMutableList()
+            }
+
+            // remover atribuição atual e limpar nó
+            assignment.remove(sensor)
+            node.percentage = null
+        }
+    }
+    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //import com.example.demo.domain.NetworkTopology
 //import com.example.demo.domain.Sensor
 //import com.example.demo.pipeline.DutyCycleParameter

@@ -15,32 +15,26 @@ data class DutyCycleParameter(
 
 
 data class TopologyScheduleResponse(
+    val id:Int,
     val sensors: List<SensorResultOutput>,
-    val links: List<LinkOutput>
-) {
-    companion object {
+    val adjacency: Map<String, List<String>>,
+    val message: String? = null,
+    val performance: PerformanceMetrics?
 
-//        fun from(
-//            schedules: List<Schedule>,
-//            originalRequest: TopologyRequest
-//        ): TopologyScheduleResponse {
-//
-//            val sensorsOutput = schedules.map {
-//                SensorResultOutput(
-//                    id = it.sensor.id,
-//                    dutyCycleParameter = it.parameter.value
-//                )
-//            }
-//
-//            val linksOutput = originalRequest.links.map {
-//                LinkOutput(it.from, it.to)
-//            }
-//
-//            return TopologyScheduleResponse(
-//                sensors = sensorsOutput,
-//                links = linksOutput
-//            )
-//        }
-    }
-}
+
+)
+
+data class PerformanceMetrics(
+    val executionTimeMs: Long,
+    val memoryUsedKb: Long
+)
+
+data class ScheduledTopologyOutput(
+    val id:Int,
+    val sensors: List<SensorResultOutput>,
+    val adjacency: Map<String, List<String>>,
+    val performance: PerformanceMetrics?
+
+)
+
 

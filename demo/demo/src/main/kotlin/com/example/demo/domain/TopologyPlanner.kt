@@ -1,7 +1,9 @@
 package com.example.demo.domain
 
 import com.example.demo.pipeline.LinkOutput
+import com.example.demo.pipeline.PerformanceMetrics
 import com.example.demo.pipeline.Schedule
+import com.example.demo.pipeline.ScheduledTopologyOutput
 import com.example.demo.pipeline.SensorResultOutput
 import com.example.demo.pipeline.TopologyScheduleResponse
 import org.springframework.stereotype.Component
@@ -16,7 +18,7 @@ class TopologyPlanner {
     ): ScheduledNetworkTopology {
 
         val dutyCycles = schedules.associate {
-            it.sensor to it.parameter!!.value
+            it.sensor to it.parameter?.value
         }
 
         return ScheduledNetworkTopology(
@@ -25,18 +27,63 @@ class TopologyPlanner {
         )
     }
 }
-fun ScheduledNetworkTopology.toResponse(): TopologyScheduleResponse {
+fun ScheduledNetworkTopology.toResponse(id:Int,metrics: PerformanceMetrics?): TopologyScheduleResponse {
 
     val sensors = dutyCycles.map {
         SensorResultOutput(
             id = it.key.id,
+            x=it.key.x,
+            y=it.key.y,
             dutyCycleParameter = it.value
         )
     }
 
-    val links = adjacency.flatMap { (from, neighbors) ->
-        neighbors.map { to -> LinkOutput(from.id, to.id) }
-    }.distinct()
+    val adjacencyOut = adjacency.mapKeys { it.key.id }
+        .mapValues { (_, neighbors) ->
+            neighbors.map { it.id }
+        }
 
-    return TopologyScheduleResponse(sensors, links)
+    val unassignedSensors = dutyCycles
+        .filter { it.value == null }
+        .keys
+        .map { it.id }
+
+    val message = if (unassignedSensors.isEmpty()) {
+        "All sensors successfully assigned"
+    } else {
+        "Sensors requiring new values: ${unassignedSensors.joinToString(", ")}"
+    }
+
+    return TopologyScheduleResponse(
+        id=id,
+        sensors = sensors,
+        adjacency = adjacencyOut,
+        message = message,
+        metrics
+    )
+}
+
+fun ScheduledNetworkTopology.toOutput(id:Int,metrics: PerformanceMetrics?): ScheduledTopologyOutput {
+
+    val sensors = dutyCycles.map {
+        SensorResultOutput(
+            id = it.key.id,
+            x=it.key.x,
+            y=it.key.y,
+            dutyCycleParameter = it.value
+        )
+    }
+
+    val adjacencyOut = adjacency
+        .mapKeys { it.key.id }
+        .mapValues { (_, neighbors) ->
+            neighbors.map { it.id }
+        }
+
+    return ScheduledTopologyOutput(
+        id=id,
+        sensors = sensors,
+        adjacency = adjacencyOut,
+        metrics
+    )
 }
