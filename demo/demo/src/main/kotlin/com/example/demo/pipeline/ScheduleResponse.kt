@@ -15,7 +15,7 @@ data class DutyCycleParameter(
 
 
 data class TopologyScheduleResponse(
-    val id:Int,
+    //val id:Int,
     val sensors: List<SensorResultOutput>,
     val adjacency: Map<String, List<String>>,
     val message: String? = null,

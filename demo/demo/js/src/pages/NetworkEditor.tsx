@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { ArrowLeft, Link2, MousePointer, Play, Layers } from 'lucide-react'
@@ -16,7 +16,18 @@ interface PerformanceMetrics {
     executionTimeMs: number
     memoryUsedKb: number
 }
-
+interface TopologySaveRequest {
+    id?: number
+    sensors: {
+        id: string
+        x: number
+        y: number
+        desiredDutyCycle: number
+        tolerance: number
+        groupId?: string
+    }[]
+    adjacency: Record<string, string[]>
+}
 export interface SensorNode {
     id: string
     x: number
@@ -49,6 +60,7 @@ interface TopologyResponseBase {
         x: number | null
         y: number | null
         dutyCycleParameter: number | null
+        grouId?: string
     }[]
     adjacency: Record<string, string[]>
     message?: string,
@@ -56,6 +68,17 @@ interface TopologyResponseBase {
 }
 
 /* ===================== API ===================== */
+
+
+async function saveTopology(body: TopologySaveRequest): Promise<void> {
+    const res = await fetch('/api/topology/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+
+    if (!res.ok) throw new Error('Save failed')
+}
 
 async function fetchTopology(id: number): Promise<TopologyResponseBase> {
     const res = await fetch(`/api/topology/${id}`)
@@ -96,10 +119,12 @@ export default function NetworkEditor() {
     const [edgeMode, setEdgeMode] = useState(false)
     const [edgeStart, setEdgeStart] = useState<string | null>(null)
 
+    const [isSaving, setIsSaving] = useState(false)
+
     const [groupMode, setGroupMode] = useState(false)
     const [selectedNodes, setSelectedNodes] = useState<string[]>([])
 
-
+    const savingRef = useRef(false)
 
     const [result, setResult] = useState<TopologyResponseBase | null>(null)
     const [isRunning, setIsRunning] = useState(false)
@@ -147,6 +172,7 @@ export default function NetworkEditor() {
                 y: s.y ?? 0,
                 desiredDutyCycle: s.dutyCycleParameter ?? 0.5,
                 tolerance: 0.1,
+                groupId: s.grouId ?? undefined,
             }))
         )
 
@@ -175,21 +201,7 @@ export default function NetworkEditor() {
 
 
     /* ---------- Node handlers ---------- */
-    let nodeCounter2 = 0
 
-    function nextId3(): string {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        let n = nodeCounter++
-        let id = ''
-
-        do {
-            id = alphabet[n % 26] + id
-            n = Math.floor(n / 26) - 1
-        } while (n >= 0)
-
-        return id
-    }
-    let nodeCounter = 1
 
     function nextId(nodes: { id: string }[]): string {
         const used = new Set<number>()
@@ -218,6 +230,61 @@ export default function NetworkEditor() {
     }, [])
 
     */
+
+    const saveMutation = useMutation({
+        mutationFn: (body: TopologySaveRequest) => saveTopology(body),
+
+        onSuccess: () => {
+            toast.success('Topologia guardada com sucesso')
+        },
+
+        onError: () => {
+            toast.error('Erro ao guardar topologia')
+        },
+
+        onSettled: () => {
+            setIsSaving(false)
+            savingRef.current = false
+        },
+    })
+    const buildAdjacency = () => {
+        const adjacency: Record<string, string[]> = {}
+
+        nodes.forEach(n => (adjacency[n.id] = []))
+
+        edges.forEach(e => {
+            adjacency[e.source].push(e.target)
+            adjacency[e.target].push(e.source)
+        })
+
+        return adjacency
+    }
+    const handleSave = () => {
+        // bloqueio imediato (sync, não depende do React state)
+        if (savingRef.current || saveMutation.isPending) return
+
+        if (nodes.length === 0) {
+            toast.error('Adicione sensores primeiro')
+            return
+        }
+
+        savingRef.current = true
+        setIsSaving(true)
+
+        saveMutation.mutate({
+            id: topologyId ?? undefined,
+            sensors: nodes.map(n => ({
+                id: n.id,
+                x: Math.round(n.x),
+                y: Math.round(n.y),
+                desiredDutyCycle: n.desiredDutyCycle,
+                tolerance: n.tolerance,
+                groupId: n.groupId,
+            })),
+            adjacency: buildAdjacency(),
+        })
+    }
+
     const handleAddNode = useCallback((x: number, y: number) => {
         setNodes(prev => {
             const id = nextId(prev)
@@ -398,6 +465,13 @@ export default function NetworkEditor() {
                     <Button size="sm" onClick={handleRun} disabled={isRunning}>
                         <Play className="w-4 h-4 mr-1" />
                         Executar
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={isSaving || saveMutation.isPending}
+                    >
+                        Save
                     </Button>
                 </div>
             </div>

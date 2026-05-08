@@ -9,7 +9,6 @@ import {
     ToastViewport,
 } from "./toast"
 
-// Tipagem opcional mais segura para action
 type ToastAction = React.ReactNode
 
 type ToastItem = {

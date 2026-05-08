@@ -2,12 +2,11 @@ import * as React from "react"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-// utilitário de classes
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-// SSR-safe
+//
 export const isIframe: boolean =
     typeof window !== "undefined" && window.self !== window.top
 

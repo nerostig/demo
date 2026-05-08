@@ -4,6 +4,7 @@ import com.example.demo.pipeline.Problem
 import com.example.demo.pipeline.ScheduledTopologyOutput
 import com.example.demo.pipeline.TopologyGroupRequest
 import com.example.demo.pipeline.TopologyRequest
+import com.example.demo.pipeline.TopologySaveRequest
 import com.example.demo.pipeline.TopologyScheduleResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 ///ERROS _4xx 0u 5xx
 
@@ -24,17 +26,32 @@ import org.springframework.web.bind.annotation.RestController
 class TopologyController (
      private val service:TopologyService
 ){
-//    @PostMapping("/implement")
-//    fun execute(@RequestBody request: TopologyRequest): TopologyScheduleResponse {
-//        return service.plan(request)
-//
-//
-//    }
-//
-//    @PostMapping("/implement/group")
-//    fun execute(@RequestBody request: TopologyGroupRequest): TopologyScheduleResponse {
-//        return service.planGroups(request)
-//    }
+
+
+    @PostMapping("/save")
+    fun save(
+        @RequestBody request: TopologySaveRequest
+    ): ResponseEntity<Any> =
+        try {
+            ResponseEntity.ok(service.saveOnly(request))
+        } catch (ex: InvalidTopologyException) {
+            Problem.response(400, Problem.invalidTopology)
+        } catch (ex: Exception) {
+            Problem.response(500, Problem.internalServerError)
+        }
+
+    @PostMapping("/simulate/{id}")
+    fun simulate(
+        @PathVariable id: Int,
+        @RequestParam slots: Int
+    ): ResponseEntity<Any> =
+        try {
+            ResponseEntity.ok(service.simulateServiceTopology(id, slots))
+        } catch (ex: TopologyNotFoundException) {
+            Problem.response(404, Problem.topologyNotFound)
+        } catch (ex: Exception) {
+            Problem.response(500, Problem.internalServerError)
+        }
 
     @DeleteMapping("/{id}")
     fun deleteTopology(@PathVariable id: Int): ResponseEntity<Any> =

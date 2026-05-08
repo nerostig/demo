@@ -32,7 +32,7 @@ export default function AlgorithmPanel({
             </CardHeader>
 
             <CardContent className="space-y-4">
-                {/* (Opcional) parâmetros futuros */}
+                {/* */}
                 <div className="space-y-2">
                     <Label className="text-xs">
                         Parâmetros
@@ -48,7 +48,7 @@ export default function AlgorithmPanel({
                     </p>
                 </div>
 
-                {/* Botões */}
+                {/* Botoes */}
                 <div className="flex gap-2">
                     <Button
                         onClick={onRun}
@@ -70,7 +70,7 @@ export default function AlgorithmPanel({
                     )}
                 </div>
 
-                {/* Info */}
+                {/*  */}
                 <div className="text-xs text-muted-foreground space-y-1">
                     <p><strong>Método:</strong> Algoritmo no backend</p>
                     <p><strong>Restrição:</strong> Vizinhos não podem partilhar o mesmo intervalo</p>

@@ -4,12 +4,10 @@ import { X } from "lucide-react"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-// utilitário de classes
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-// ToastProvider
 const ToastProvider = React.forwardRef<
     HTMLDivElement,
     React.HTMLAttributes<HTMLDivElement>

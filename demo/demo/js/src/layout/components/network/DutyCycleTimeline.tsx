@@ -37,7 +37,7 @@ export default function DutyCycleTimeline({
                     Duty Cycle por Sensor
                 </CardTitle>
 
-                {/* MESSAGE DO BACKEND */}
+                {/* MESSAGE  */}
                 {message && (
                     <p className="text-xs text-muted-foreground">
                         {message}

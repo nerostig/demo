@@ -12,17 +12,14 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-// SSR-safe (útil mesmo em client components)
 export const isIframe: boolean =
     typeof window !== "undefined" && window.self !== window.top
 
-// aliases Radix
 const Sheet = SheetPrimitive.Root
 const SheetTrigger = SheetPrimitive.Trigger
 const SheetClose = SheetPrimitive.Close
 const SheetPortal = SheetPrimitive.Portal
 
-// Overlay
 const SheetOverlay = React.forwardRef<
     React.ElementRef<typeof SheetPrimitive.Overlay>,
     React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
@@ -38,7 +35,6 @@ const SheetOverlay = React.forwardRef<
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
-// variantes do SheetContent
 const sheetVariants = cva(
     "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
     {
@@ -60,7 +56,6 @@ const sheetVariants = cva(
     }
 )
 
-// SheetContent
 export interface SheetContentProps
     extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
         VariantProps<typeof sheetVariants> {}

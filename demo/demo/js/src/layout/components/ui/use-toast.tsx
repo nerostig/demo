@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react"
 
-// =====================
-// Config
-// =====================
+
 const TOAST_LIMIT = 20
 const TOAST_REMOVE_DELAY = 1000000
 
-// =====================
-// Types
-// =====================
+
 export type Toast = {
     id: string
     open?: boolean
@@ -28,9 +24,7 @@ type Action =
     | { type: "DISMISS_TOAST"; toastId?: string }
     | { type: "REMOVE_TOAST"; toastId?: string }
 
-// =====================
-// Internal state
-// =====================
+
 let count = 0
 
 function genId() {
@@ -62,9 +56,7 @@ const clearFromRemoveQueue = (toastId: string) => {
     }
 }
 
-// =====================
-// Reducer
-// =====================
+
 export const reducer = (state: State, action: Action): State => {
     switch (action.type) {
         case "ADD_TOAST":
@@ -115,9 +107,7 @@ export const reducer = (state: State, action: Action): State => {
     }
 }
 
-// =====================
-// Memory store
-// =====================
+
 const listeners: Array<(state: State) => void> = []
 let memoryState: State = { toasts: [] }
 
@@ -126,9 +116,7 @@ function dispatch(action: Action) {
     listeners.forEach((listener) => listener(memoryState))
 }
 
-// =====================
-// API: toast()
-// =====================
+
 export function toast(props: Omit<Toast, "id">) {
     const id = genId()
 

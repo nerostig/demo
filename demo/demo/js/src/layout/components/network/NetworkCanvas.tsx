@@ -89,7 +89,7 @@ export default function NetworkCanvas({
     }, [])
     */
 
-    /* ================= HELPERS ================= */
+    /* =================  ================= */
 
     const getNodeColor = useCallback((nodeId: string) => {
         if (!colorAssignments) return null
@@ -297,7 +297,7 @@ export default function NetworkCanvas({
                 className="rounded-lg cursor-crosshair"
             />
 
-            {/*  TEXTO DE AJUDA (EMPTY STATE) */}
+            {/*   */}
             {interactive && nodes.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <p className="text-muted-foreground text-sm">

@@ -5,5 +5,7 @@ data class SensorInput(
     val x:Int?,
     val y:Int?,
     val desiredDutyCycle:Double,
-    val tolerance:Double
+    val tolerance:Double,
+    val groupId: String? = null
+
 )

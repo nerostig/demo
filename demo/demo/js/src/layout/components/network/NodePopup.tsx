@@ -13,10 +13,7 @@ interface Props {
     onClose?: () => void
 }
 
-/**
- * Popup flutuante sobre o nó
- * Coordenadas relativas ao container do canvas
- */
+
 export default function NodePopup({
                                       node,
                                       canvasSize,
@@ -26,23 +23,22 @@ export default function NodePopup({
                                   }: Props) {
     const ref = useRef<HTMLDivElement | null>(null)
 
-    /* ================= STATE ================= */
+    /* =================  ================= */
 
-    // dutyCycle em percentagem (UI)
     const [dutyPercent, setDutyPercent] = useState(
         Math.round(node.desiredDutyCycle )
     )
 
     const [tolerance, setTolerance] = useState(node.tolerance)
 
-    /* ================= SYNC ================= */
+    /* =================  ================= */
 
     useEffect(() => {
         setDutyPercent(Math.round(node.desiredDutyCycle ))
         setTolerance(node.tolerance)
     }, [node])
 
-    /* ================= CLICK OUTSIDE ================= */
+    /* ================= CLICK  ================= */
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {
@@ -120,7 +116,7 @@ export default function NodePopup({
                     onValueChange={([v]) => {
                         setDutyPercent(v)
                         onUpdate?.(node.id, {
-                            desiredDutyCycle: v /// 100, // 🔴 backend continua 0–1
+                            desiredDutyCycle: v
                         })
                     }}
                 />

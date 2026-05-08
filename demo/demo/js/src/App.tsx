@@ -17,13 +17,13 @@ const App = () => {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/networks" element={<Networks />} />
                     <Route path="/editor/:id" element={<NetworkEditor />} />
-                    <Route path="/about" element={<About />} />
+                    /*<Route path="/about" element={<About />} />*/
                 </Route>
 
                 {/*<Route path="*" element={<PageNotFound />} />*/}
             </Routes>
 
-            <Toaster />
+
         </Router>
     )
 }

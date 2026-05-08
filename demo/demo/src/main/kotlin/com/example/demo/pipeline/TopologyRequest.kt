@@ -15,7 +15,7 @@ data class TopologyRequest(
     fun toDomain(): NetworkTopology {
 
         val sensorMap = sensors.associate {
-            it.id to Sensor(it.id,it.x,it.y, it.desiredDutyCycle, it.tolerance)
+            it.id to Sensor(it.id, it.groupId,it.x,it.y, it.desiredDutyCycle, it.tolerance)
         }
 
         val vertex = mutableMapOf<Sensor, MutableList<Sensor>>()

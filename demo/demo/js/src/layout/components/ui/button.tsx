@@ -4,16 +4,13 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-// utilitário de classes
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-// SSR-safe
 export const isIframe: boolean =
     typeof window !== "undefined" && window.self !== window.top
 
-// variantes do botão
 export const buttonVariants = cva(
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
     {

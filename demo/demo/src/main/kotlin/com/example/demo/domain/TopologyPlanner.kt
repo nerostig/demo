@@ -27,11 +27,12 @@ class TopologyPlanner {
         )
     }
 }
-fun ScheduledNetworkTopology.toResponse(id:Int,metrics: PerformanceMetrics?): TopologyScheduleResponse {
+fun ScheduledNetworkTopology.toResponse(metrics: PerformanceMetrics?): TopologyScheduleResponse {
 
     val sensors = dutyCycles.map {
         SensorResultOutput(
             id = it.key.id,
+            grouId = it.key.groupid,
             x=it.key.x,
             y=it.key.y,
             dutyCycleParameter = it.value
@@ -55,7 +56,7 @@ fun ScheduledNetworkTopology.toResponse(id:Int,metrics: PerformanceMetrics?): To
     }
 
     return TopologyScheduleResponse(
-        id=id,
+        //id=id,
         sensors = sensors,
         adjacency = adjacencyOut,
         message = message,
@@ -68,6 +69,7 @@ fun ScheduledNetworkTopology.toOutput(id:Int,metrics: PerformanceMetrics?): Sche
     val sensors = dutyCycles.map {
         SensorResultOutput(
             id = it.key.id,
+            grouId = it.key.groupid,
             x=it.key.x,
             y=it.key.y,
             dutyCycleParameter = it.value
