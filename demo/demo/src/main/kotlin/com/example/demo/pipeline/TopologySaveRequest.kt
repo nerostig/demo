@@ -2,6 +2,7 @@ package com.example.demo.pipeline
 
 data class TopologySaveRequest(
     val id: Int?,
+    val name:String?,
     val sensors: List<SensorSaveInput>,
     val adjacency: Map<String, List<String>>
 )

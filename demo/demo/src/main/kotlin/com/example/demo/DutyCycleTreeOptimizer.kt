@@ -105,6 +105,7 @@ class GlobalNogoodStore {
     }
 }
 
+
 private fun violatesNogood(
     assignment: Map<Sensor, Double>,
     ctx: SearchContext
@@ -141,7 +142,41 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
 
     private val globalNogoods = GlobalNogoodStore()
 
+    private fun ac3Propagate(
+        assigned: Sensor,
+        assignment: Map<Sensor, Double>,
+        domains: MutableMap<Sensor, MutableList<Int>>,
+        ctx: SearchContext
+    ) {
+        val assignedValue = assignment[assigned] ?: return
 
+        for (neighbor in topology.neighbors(assigned)) {
+
+            if (neighbor in assignment) continue
+
+            val domain = domains[neighbor] ?: continue
+            if (domain.isEmpty()) continue
+
+            val it = domain.iterator()
+            while (it.hasNext()) {
+                val period = it.next()
+                val percentage = ceil(100.0 / period)
+
+                val compatible =
+                    percentage != assignedValue &&
+                            areCoprimePercentages(
+                                percentage,
+                                assignedValue,
+                                ctx
+                            )
+
+                if (!compatible) {
+                    it.remove()
+                }
+            }
+
+        }
+    }
 
 
     private lateinit var orderedSensors: List<Sensor>
@@ -213,8 +248,7 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
         )
 
 
-    val baseCutoff = 2_000   // ajustável
-    val maxRestarts = 30
+
 
     //for (restart in 1..maxRestarts) {
 
@@ -226,7 +260,6 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
             async(Dispatchers.Default) {
 
                 val ctx = SearchContext(globalNogoods)
-                    //cutoff)
 
 //                val domains = sensors
 //                    .associateWith { generateCandidates(it).toMutableList() }
@@ -235,7 +268,7 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
                 val assignment = mutableMapOf<Sensor, Double>()
 
                 buildTree(
-                    sensor = startSensor,
+                    sensor = sensors.first(),
                     domains = domains,
                     assignment = assignment,
                     currentCost = 0.0,
@@ -336,6 +369,20 @@ private fun impactOf(
             .size
     }
 
+    private fun printDomains(
+        title: String,
+        domains: Map<Sensor, List<Int>>
+    ) {
+        println("---- $title ----")
+        for ((s, d) in domains) {
+            val values = d.joinToString(", ") { p ->
+                "${ceil(100.0 / p).toInt()}%"
+            }
+            println("${s.id}: [$values]")
+        }
+        println("-------------------------")
+    }
+
     private fun buildTree(
         sensor: Sensor,
         domains: MutableMap<Sensor, MutableList<Int>>,
@@ -396,6 +443,13 @@ private fun impactOf(
         for (period in sortedDomain) {
             val percentage = ceil(100.0 / period)//round(100.0 / period)
             assignment[sensor] = percentage
+
+            println("\n>>> Assign ${sensor.id} = $percentage%")
+            //printDomains("BEFORE AC-3", domains)
+
+            //ac3Propagate(sensor, assignment, domains, ctx)
+
+            //printDomains("AFTER AC-3", domains)
 
 
 

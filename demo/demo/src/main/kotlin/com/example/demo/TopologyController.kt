@@ -96,21 +96,21 @@ class TopologyController (
             Problem.response(500, Problem.internalServerError)
         }
 
-    @PostMapping("/implement/group")
-    fun executeGroups(
-        @RequestBody request: TopologyGroupRequest
-    ): ResponseEntity<*> =
-        try {
-            ResponseEntity.ok(service.planGroups(request))
-        } catch (ex: InvalidTopologyException) {
-            Problem.response(400, Problem.invalidTopology)
-        } catch (ex: InvalidDutyCycleException) {
-            Problem.response(400, Problem.invalidDutyCycle)
-        } catch (ex: SchedulingFailedException) {
-            Problem.response(500, Problem.schedulingFailed)
-        } catch (ex: Exception) {
-            Problem.response(500, Problem.internalServerError)
-        }
+//    @PostMapping("/implement/group")
+//    fun executeGroups(
+//        @RequestBody request: TopologyGroupRequest
+//    ): ResponseEntity<*> =
+//        try {
+//            ResponseEntity.ok(service.planGroups(request))
+//        } catch (ex: InvalidTopologyException) {
+//            Problem.response(400, Problem.invalidTopology)
+//        } catch (ex: InvalidDutyCycleException) {
+//            Problem.response(400, Problem.invalidDutyCycle)
+//        } catch (ex: SchedulingFailedException) {
+//            Problem.response(500, Problem.schedulingFailed)
+//        } catch (ex: Exception) {
+//            Problem.response(500, Problem.internalServerError)
+//        }
 
 
     @GetMapping("/{id}")

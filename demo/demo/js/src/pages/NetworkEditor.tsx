@@ -10,6 +10,7 @@ import NodeProperties from '../layout/components/network/NodeProperties'
 import NetworkCanvas from '../layout/components/network/NetworkCanvas'
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/components/ui/card'
 import { Button } from '../layout/components/ui/button'
+import TopologyIO from "../layout/components/network/TopologyIO";
 
 /* ===================== TYPES ===================== */
 interface PerformanceMetrics {
@@ -330,15 +331,35 @@ export default function NetworkEditor() {
 
     /* ---------- GROUP LOGIC ---------- */
 
+    function nextGroupId(nodes: { groupId?: string }[]): string {
+        const used = new Set<number>()
+
+        for (const n of nodes) {
+            if (!n.groupId) continue
+            const match = n.groupId.match(/^G(\d+)$/)
+            if (match) {
+                used.add(Number(match[1]))
+            }
+        }
+
+        let i = 1
+        while (used.has(i)) {
+            i++
+        }
+
+        return `G${i}`
+    }
+
     const createGroupFromSelection = () => {
         if (selectedNodes.length < 2) {
             toast.error('Selecione pelo menos 2 sensores')
             return
         }
 
-        const groupId = `G${Date.now()}`
+        //const groupId = `G${Date.now()}`
+        const  groupId =nextGroupId(nodes)
 
-        setNodes(prev =>
+            setNodes(prev =>
             prev.map(n =>
                 selectedNodes.includes(n.id)
                     ? { ...n, groupId }
@@ -431,6 +452,22 @@ export default function NetworkEditor() {
                 <Button variant="ghost" size="icon" onClick={() => navigate('/networks')}>
                     <ArrowLeft />
                 </Button>
+
+                <TopologyIO
+                    name={`topology-${topologyId ?? 'new'}`}
+                    description=""
+                    nodes={nodes}
+                    edges={edges}
+                    onImport={({ name, description, nodes, edges }) => {
+                        setNodes(nodes)
+                        setEdges(edges)
+                        setSelectedNodeId(null)
+                        setSelectedNodes([])
+                        setResult(null)
+
+                        toast.success('Topologia importada')
+                    }}
+                />
 
                 <div className="flex gap-2">
                     <Button

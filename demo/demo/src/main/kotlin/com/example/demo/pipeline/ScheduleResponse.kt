@@ -31,6 +31,7 @@ data class PerformanceMetrics(
 
 data class ScheduledTopologyOutput(
     val id:Int,
+    val name:String?,
     val sensors: List<SensorResultOutput>,
     val adjacency: Map<String, List<String>>,
     val performance: PerformanceMetrics?

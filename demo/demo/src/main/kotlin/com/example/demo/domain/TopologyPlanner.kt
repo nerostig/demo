@@ -84,6 +84,7 @@ fun ScheduledNetworkTopology.toOutput(id:Int,metrics: PerformanceMetrics?): Sche
 
     return ScheduledTopologyOutput(
         id=id,
+        name=this.name,
         sensors = sensors,
         adjacency = adjacencyOut,
         metrics
