@@ -13,9 +13,7 @@ import kotlin.math.ceil
 import kotlin.math.round
 import kotlin.math.sqrt
 
-// ===================== MODELO =====================
 
-import kotlin.random.Random
 
 
 // ===================== MATEMÁTICA =====================
@@ -33,11 +31,8 @@ fun gcd(a: Int, b: Int): Int {
 }
 
 fun areCoprime(a: Int, b: Int): Boolean = gcd(a, b) == 1
-fun dutyCycleToPeriod(dc: Double): Int = (100.0 / dc).toInt()
+fun dutyCycleToPeriod(dc: Double): Int = round(100.0 / dc).toInt()
 fun areCoprimePercentagess(a: Double, b: Double): Boolean {
-    // println("avvv ->$a")
-    //println("b vvv->$b")
-
 
     return areCoprime(dutyCycleToPeriod(a), dutyCycleToPeriod(b))
 
@@ -49,17 +44,20 @@ fun areCoprimePercentagess(a: Double, b: Double): Boolean {
 
 
 fun generateCandidates(sensor: Sensor): List<Int> {
-    val minPeriod = kotlin.math.ceil(
+    val minPeriod = kotlin.math.round(
         100.0 / (sensor.desiredDutyCycle + sensor.tolerance)
     ).toInt()
 
-    val maxPeriod = kotlin.math.ceil(
+    println("${sensor.id }")
+    println(sensor.desiredDutyCycle - sensor.tolerance)
+    val maxPeriod = kotlin.math.round(
         100.0 / (sensor.desiredDutyCycle - sensor.tolerance)
     ).toInt()
     println("${sensor.id }> $minPeriod e $maxPeriod")
 
     return (minPeriod..maxPeriod).toList()
 }
+
 
 
 
@@ -142,41 +140,7 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
 
     private val globalNogoods = GlobalNogoodStore()
 
-    private fun ac3Propagate(
-        assigned: Sensor,
-        assignment: Map<Sensor, Double>,
-        domains: MutableMap<Sensor, MutableList<Int>>,
-        ctx: SearchContext
-    ) {
-        val assignedValue = assignment[assigned] ?: return
 
-        for (neighbor in topology.neighbors(assigned)) {
-
-            if (neighbor in assignment) continue
-
-            val domain = domains[neighbor] ?: continue
-            if (domain.isEmpty()) continue
-
-            val it = domain.iterator()
-            while (it.hasNext()) {
-                val period = it.next()
-                val percentage = ceil(100.0 / period)
-
-                val compatible =
-                    percentage != assignedValue &&
-                            areCoprimePercentages(
-                                percentage,
-                                assignedValue,
-                                ctx
-                            )
-
-                if (!compatible) {
-                    it.remove()
-                }
-            }
-
-        }
-    }
 
 
     private lateinit var orderedSensors: List<Sensor>
@@ -210,19 +174,12 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
                 .thenBy { topology.neighbors(it).size }
         )
 
-   // val threads=mutableListOf<Thread>()
     val domains = sensors
         .associateWith { generateCandidates(it).toMutableList() }
         .toMutableMap()
 
 
-    //
 
-//    orderedSensors = topology.sensors()
-//        .sortedWith(
-//            compareBy<Sensor> { domains2[it]?.size ?: Int.MAX_VALUE }
-//                .thenByDescending { topology.neighbors(it).size }
-//        )
 
 
     orderedSensorsPair = topology.sensors()
@@ -250,10 +207,6 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 
 
-    //for (restart in 1..maxRestarts) {
-
-      //  val lubyFactor = luby(restart)
-       // val cutoff = baseCutoff * lubyFactor
 
 
         sensors.map { startSensor ->
@@ -261,14 +214,12 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
                 val ctx = SearchContext(globalNogoods)
 
-//                val domains = sensors
-//                    .associateWith { generateCandidates(it).toMutableList() }
-//                    .toMutableMap()
+
 
                 val assignment = mutableMapOf<Sensor, Double>()
 
                 buildTree(
-                    sensor = sensors.first(),
+                    sensor = startSensor, //sensors.first(),
                     domains = domains,
                     assignment = assignment,
                     currentCost = 0.0,
@@ -277,7 +228,7 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
                 )
             }
         }.awaitAll()
-   // }
+
 
 
 
@@ -298,7 +249,7 @@ private fun impactOf(
     assignment: Map<Sensor, Double>,
     ctx: SearchContext
 ): Int {
-    val percentage =ceil(100.0 / period) //round(100.0 / period)
+    val percentage =round(100.0 / period) //round(100.0 / period)
     var impact = 0
 
     for (neighbor in topology.neighbors(sensor)) {
@@ -369,19 +320,7 @@ private fun impactOf(
             .size
     }
 
-    private fun printDomains(
-        title: String,
-        domains: Map<Sensor, List<Int>>
-    ) {
-        println("---- $title ----")
-        for ((s, d) in domains) {
-            val values = d.joinToString(", ") { p ->
-                "${ceil(100.0 / p).toInt()}%"
-            }
-            println("${s.id}: [$values]")
-        }
-        println("-------------------------")
-    }
+
 
     private fun buildTree(
         sensor: Sensor,
@@ -392,42 +331,14 @@ private fun impactOf(
         ctx: SearchContext
 
     ) {
-//        ctx.decisions++
-//        if (ctx.decisions > ctx.cutoff) {
-//            return
-//        }
+
 
         val domain = domains[sensor] ?: return
 
         // Backup dos domínios antes da propagação
         val originalDomains = mutableMapOf<Sensor, List<Int>>()
-        backupDomains(domains, originalDomains)
+       // backupDomains(domains, originalDomains)
 
-        // Ordena valores com base em impacto local e desvio
-//        val sortedDomain = domain.sortedWith(compareBy<Int> { period ->
-//            val percentage = round(100.0 / period)
-//           topology.neighbors(sensor)
-//                .filter { it !in assignment }
-//               .sumOf { neighbor ->
-//                    domains[neighbor]!!.count { neighborValue ->
-//                       !areCoprimePercentages(percentage, round(100.0 / neighborValue))
-//                    }
-//                }
-//       })
-
-//        val sortedDomain = domain.sortedBy { period ->
-//            val percentage = round(100.0 / period)
-//            abs(percentage - sensor.desiredDutyCycle)
-//        }
-
-
-//        val sortedDomain = domain.sortedWith(
-//            compareBy<Int> { period ->
-//                val penalty = impactOf(sensor, period, domains, assignment,ctx)
-//                val deviation = abs(round(100.0 / period) - sensor.desiredDutyCycle)
-//                penalty + deviation.toInt()
-//            }
-//        )
 
         val sortedDomain = domain.sortedWith(
             compareBy<Int> { period ->
@@ -441,15 +352,10 @@ private fun impactOf(
 
 
         for (period in sortedDomain) {
-            val percentage = ceil(100.0 / period)//round(100.0 / period)
+            val percentage = round(100.0 / period)//round(100.0 / period)
             assignment[sensor] = percentage
 
-            println("\n>>> Assign ${sensor.id} = $percentage%")
-            //printDomains("BEFORE AC-3", domains)
 
-            //ac3Propagate(sensor, assignment, domains, ctx)
-
-            //printDomains("AFTER AC-3", domains)
 
 
 
@@ -464,7 +370,6 @@ private fun impactOf(
             val newSquaredCost = currentCost + (error * error)
             val rmsPartial = sqrt(newSquaredCost / assignment.size.toDouble())
 
-            val nullCount = topology.sensors().size - assignment.size
 
             if (bestAssignment != null && bestNullCount == 0 && rmsPartial > bestCost) {
                 assignment.remove(sensor)
@@ -502,33 +407,10 @@ private fun impactOf(
 
 
 
-            //evaluateSolution(assignment, newSquaredCost)
             tryUpdate(assignment, newSquaredCost)
 
 
-//            val nextSensors = topology.neighbors(sensor)
-//                .filter { it !in assignment }
-//                .sortedWith(
-//                    compareBy<Sensor> { domains[it]?.size ?: Int.MAX_VALUE }
-//                        .thenByDescending {
-//                            topology.neighbors(it).count { n -> n !in assignment }
-//                        }
-//                )
 
-//            val nextSensors = orderedSensorsPair
-//                .first { it.first == sensor }
-//                .second
-//                .filter { it !in assignment }
-
-//
-//            val nextSensors = orderedSensorsPair
-//                .first { it.first == sensor }
-//                .second
-//                .asSequence()
-//                .filter { it !in assignment }
-//                .sortedWith(compareBy<Sensor> {
-//                    s-> -nullRisk(s,assignment)
-//                }).toList()
 
             val nextSensors = orderedSensorsPair
                 .first { it.first == sensor }
@@ -563,7 +445,7 @@ private fun impactOf(
             }
 
             // Rollback de domínios
-            restoreDomains(domains, originalDomains)
+            //restoreDomains(domains, originalDomains)
             assignment.remove(sensor)
         }
     }
@@ -581,28 +463,14 @@ private fun impactOf(
 // ===================== API =====================
 fun computeSchedulesOptimized(topology: NetworkTopology): List<Schedule> {
 
-//    println("=== TOPOLOGIA RECEBIDA ===")
-//
-//    for (sensor in topology.sensors()) {
-//        val neighbors = topology.neighbors(sensor)
-//        println(
-//            "Sensor ${sensor.id} -> vizinhos: ${
-//                neighbors.joinToString { it.id }
-//            }"
-//        )
-//    }
-//
-//    println("=========================")
+
 
     val optimizer = DutyCycleTreeOptimizer(topology)
     val solution = optimizer.optimize()
 
 
 
-//    println("=== SOLUÇÃO ÓTIMA ===")
-//    solution?.forEach { (sensor, value) ->
-//        println("Sensor ${sensor.id}: DutyCycle = $value%")
-//    }
+
     return topology.sensors().map { sensor ->
         val value = solution?.get(sensor)
         if (value != null) Schedule(sensor, DutyCycleParameter(value)) else Schedule(sensor, null)
@@ -617,7 +485,7 @@ fun main() {
     // ===================== SENSORES =====================
     val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 0.0) // 100/20 = 5
     val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 0.0) // 100/25 = 4
-    val C = Sensor("C", desiredDutyCycle = 15.0, tolerance = 0.0) // 100/15 ≈ 6
+    val C = Sensor("C", desiredDutyCycle = 16.0, tolerance = 0.0) // 100/15 ≈ 6
     val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.0) // 100/10 = 10
     //val D = Sensor("D", desiredDutyCycle = 9.09, tolerance = 0.0)  // período ≈ 11 → coprimo com A e C
     val E = Sensor("E", desiredDutyCycle = 9.0, tolerance = 0.0)  // 100/9 ≈ 11
@@ -657,16 +525,16 @@ fun main() {
         adjacency = topology.adjacency,
         dutyCycles = solution!!
     )
-
-    val simulation = simulateTimeSlots(
-        topology = scheduled,
-        totalSlots = 20
-    )
-
-    println("\n=== SIMULAÇÃO ===")
-    simulation.slots.forEach { slot ->
-        println("Slot ${slot.slot}: ${slot.activeSensors}")
-    }
+//
+//    val simulation = simulateTimeSlots(
+//        topology = scheduled,
+//        totalSlots = 20
+//    )
+//
+//    println("\n=== SIMULAÇÃO ===")
+//    simulation.slots.forEach { slot ->
+//        println("Slot ${slot.slot}: ${slot.activeSensors}")
+//    }
 
 
 
@@ -678,42 +546,3 @@ fun main() {
 
 
 
-
-
-
-
-
-//            var forwardCheckFailed = false
-//            for (neighbor in topology.neighbors(sensor)) {
-//                if (neighbor !in assignment) {
-//                    val neighborDomain = newDomains[neighbor]!!
-//                    neighborDomain.removeIf { value ->
-//                        !areCoprimePercentages(percentage, round(100.0 / value))
-//                    }
-//                    if (neighborDomain.isEmpty()) {
-//                        forwardCheckFailed = true
-//                        break
-//                    }
-//                }
-//            }
-//            if (forwardCheckFailed) {
-//                assignment.remove(sensor)
-//                node.percentage = null
-//                continue
-//            }
-
-
-//            topology.neighbors(sensor)
-//                .filter { it !in assignment }
-//                .forEach { neighbor ->
-//                    newDomains[neighbor] = newDomains[neighbor]!!
-//                        .filter { neighborValue ->
-//                            areCoprimePercentages(percentage, round(100.0 / neighborValue))
-//                        }.toMutableList()
-//                    if (newDomains[neighbor]!!.isEmpty()) valid = false
-//                }
-//            if (!valid) {
-//                assignment.remove(sensor)
-//                node.percentage = null
-//                continue
-//            }

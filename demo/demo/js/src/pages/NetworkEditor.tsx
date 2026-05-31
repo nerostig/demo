@@ -19,6 +19,7 @@ interface PerformanceMetrics {
 }
 interface TopologySaveRequest {
     id?: number
+    name?: string
     sensors: {
         id: string
         x: number
@@ -56,6 +57,7 @@ interface TopologyRequest {
 
 interface TopologyResponseBase {
     id: number
+    name?: string
     sensors: {
         id: string
         x: number | null
@@ -70,15 +72,22 @@ interface TopologyResponseBase {
 
 /* ===================== API ===================== */
 
+async function saveTopology(id: number | null, body: TopologySaveRequest) {
+    const url = id === null
+        ? '/api/topology'
+        : `/api/topology/${id}`
 
-async function saveTopology(body: TopologySaveRequest): Promise<void> {
-    const res = await fetch('/api/topology/save', {
-        method: 'POST',
+    const method = id === null ? 'POST' : 'PUT'
+
+    const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     })
 
     if (!res.ok) throw new Error('Save failed')
+
+    return res.json()
 }
 
 async function fetchTopology(id: number): Promise<TopologyResponseBase> {
@@ -91,16 +100,13 @@ async function runAlgorithm(
     id: number | null,
     body: TopologyRequest
 ): Promise<TopologyResponseBase> {
-    console.log(' Payload enviado para runAlgorithm:', body)
 
-    const res = await fetch(
-        id === null ? '/api/topology/implement' : `/api/topology/${id}`,
-        {
-            method: id === null ? 'POST' : 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        }
-    )
+    const res = await fetch('/api/topology/planning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    })
+
     if (!res.ok) throw new Error('Algorithm failed')
     return res.json()
 }
@@ -126,6 +132,8 @@ export default function NetworkEditor() {
     const [selectedNodes, setSelectedNodes] = useState<string[]>([])
 
     const savingRef = useRef(false)
+
+    const [topologyName, setTopologyName] = useState<string>('')
 
     const [result, setResult] = useState<TopologyResponseBase | null>(null)
     const [isRunning, setIsRunning] = useState(false)
@@ -166,6 +174,7 @@ export default function NetworkEditor() {
     useEffect(() => {
         if (!data) return
 
+        setTopologyName(data.name ?? '')
         setNodes(
             data.sensors.map(s => ({
                 id: s.id,
@@ -233,7 +242,7 @@ export default function NetworkEditor() {
     */
 
     const saveMutation = useMutation({
-        mutationFn: (body: TopologySaveRequest) => saveTopology(body),
+        mutationFn: (body: TopologySaveRequest) => saveTopology(topologyId,body),
 
         onSuccess: () => {
             toast.success('Topologia guardada com sucesso')
@@ -274,6 +283,7 @@ export default function NetworkEditor() {
 
         saveMutation.mutate({
             id: topologyId ?? undefined,
+            name: topologyName || undefined,
             sensors: nodes.map(n => ({
                 id: n.id,
                 x: Math.round(n.x),
@@ -467,6 +477,12 @@ export default function NetworkEditor() {
 
                         toast.success('Topologia importada')
                     }}
+                />
+                <input
+                    className="border rounded px-2 py-1 text-sm"
+                    placeholder="Nome da topologia"
+                    value={topologyName}
+                    onChange={(e) => setTopologyName(e.target.value)}
                 />
 
                 <div className="flex gap-2">

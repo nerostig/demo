@@ -58,10 +58,8 @@ class JdbiConfig {
 
     @Bean
     fun jdbi(dataSource: DataSource): Jdbi {
-        // Injetando o DataSource, o Spring Boot gerencia o pool de conexões (HikariCP)
-        // e garante que o banco já esteja inicializado antes do Jdbi ser criado.
         return Jdbi.create(dataSource)
-            .installPlugins() // Importante para suporte nativo a Kotlin e Postgres
+            .installPlugins()
     }
 
 

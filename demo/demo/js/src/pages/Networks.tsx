@@ -18,6 +18,7 @@ type SensorResultOutput = {
 
 type ScheduledTopologyOutput = {
     id: number
+    name?: string | null
     sensors: SensorResultOutput[]
     adjacency: Record<string, string[]>
 }
@@ -27,7 +28,7 @@ type ScheduledTopologyOutput = {
    ========================= */
 
 async function fetchTopologies(): Promise<ScheduledTopologyOutput[]> {
-    const res = await fetch('/api/topology/all')
+    const res = await fetch('/api/topology')
 
     if (!res.ok) {
         throw new Error('Erro ao carregar topologias')
@@ -138,7 +139,9 @@ export default function Networks() {
                                                 </div>
                                                 <div>
                                                     <h3 className="text-sm font-semibold">
-                                                        Topologia #{net.id}
+                                                        {net.name?.trim()
+                                                            ? net.name
+                                                            : `Topologia #${net.id}`}
                                                     </h3>
                                                     <Badge className="text-xs mt-0.5">
                                                         Planeada

@@ -28,7 +28,7 @@ class TopologyController (
 ){
 
 
-    @PostMapping("/save")
+    @PostMapping//("/save")
     fun save(
         @RequestBody request: TopologySaveRequest
     ): ResponseEntity<Any> =
@@ -67,7 +67,7 @@ class TopologyController (
     @PutMapping("/{id:\\d+}")
     fun updateTopology(
         @PathVariable id: Int,
-        @RequestBody request: TopologyRequest
+        @RequestBody request: TopologySaveRequest
     ): ResponseEntity<Any> =
         try {
             ResponseEntity.ok(service.updateAndReplan(id, request))
@@ -79,12 +79,11 @@ class TopologyController (
             Problem.response(500, Problem.schedulingFailed)
         }
 
-    @PostMapping("/implement")
+    @PostMapping("/planning")
     fun execute(
         @RequestBody request: TopologyRequest
     ): ResponseEntity<*> =
         try {
-            println("fff $request")
             ResponseEntity.ok(service.plan(request))
         } catch (ex: InvalidTopologyException) {
             Problem.response(400, Problem.invalidTopology)
@@ -96,21 +95,7 @@ class TopologyController (
             Problem.response(500, Problem.internalServerError)
         }
 
-//    @PostMapping("/implement/group")
-//    fun executeGroups(
-//        @RequestBody request: TopologyGroupRequest
-//    ): ResponseEntity<*> =
-//        try {
-//            ResponseEntity.ok(service.planGroups(request))
-//        } catch (ex: InvalidTopologyException) {
-//            Problem.response(400, Problem.invalidTopology)
-//        } catch (ex: InvalidDutyCycleException) {
-//            Problem.response(400, Problem.invalidDutyCycle)
-//        } catch (ex: SchedulingFailedException) {
-//            Problem.response(500, Problem.schedulingFailed)
-//        } catch (ex: Exception) {
-//            Problem.response(500, Problem.internalServerError)
-//        }
+
 
 
     @GetMapping("/{id}")
@@ -121,7 +106,7 @@ class TopologyController (
             Problem.response(404, Problem.topologyNotFound)
         }
 
-    @GetMapping("/all")
+    @GetMapping//("/all")
     fun findAll(): ResponseEntity<List<ScheduledTopologyOutput>> =
         ResponseEntity.ok(service.findAll())
 

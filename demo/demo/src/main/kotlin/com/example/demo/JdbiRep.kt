@@ -25,11 +25,12 @@ class local(): TopologyRepository{
     }
 
 
-    override fun update(id: Int, topology: ScheduledNetworkTopology) {
+    override fun update(id: Int, topology: ScheduledNetworkTopology):ScheduledNetworkTopology {
         if (!storage.containsKey(id)) {
             throw TopologyNotFoundException(id)
         }
         storage[id] = topology
+        return findById(id)!!
     }
 
     override fun findAll(): Map<Int, ScheduledNetworkTopology> =

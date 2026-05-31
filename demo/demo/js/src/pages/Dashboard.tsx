@@ -27,7 +27,7 @@ export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        fetch("/api/topology/all")
+        fetch("/api/topology")
             .then(res => {
                 if (!res.ok) throw new Error("Failed to load networks")
                 return res.json()
