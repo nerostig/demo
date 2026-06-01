@@ -15,7 +15,6 @@ import com.example.demo.pipeline.toDomain
 import com.example.demo.pipeline.toDomainGroups
 import com.example.demo.repository.TransactionManager
 import com.example.demo.repository_jdbi.local
-import com.example.demo.test.simulateTimeSlots
 import computeSchedulesOptimized
 //import computeScheduless
 import org.springframework.stereotype.Service
@@ -39,19 +38,7 @@ class TopologyLocalService(
 
         return saved.toOutput(id, null)
     }
-    fun simulateServiceTopology(
-        id: Int,
-        slots: Int
-    ): SimulationOutput {
 
-        val topology = repository.findById(id)
-            ?: throw TopologyNotFoundException(id)
-
-        return simulateTimeSlots(
-            topology = topology,
-            totalSlots = slots
-        )
-    }
 
     private fun usedMemoryKb(): Long {
         val rt = Runtime.getRuntime()
@@ -91,7 +78,6 @@ class TopologyLocalService(
 
 
 
-        //return scheduledTopology.toOutput(id,metrics)
         return updated.toOutput(id, null)
 
     }

@@ -11,14 +11,6 @@ data class TopologyGroupRequest(
 
 fun TopologyGroupRequest.toDomainGroups(): NetworkTopology {
 
-//    val sensorMap = sensorGroups
-//        .flatMap { group ->
-//            group.sensorIds.map { id ->
-//                id to Sensor(id, group.desiredDutyCycle, group.tolerance)
-//            }
-//        }
-//        .toMap()
-
 
     val sensorMap = sensorGroups
         .flatMap { group ->

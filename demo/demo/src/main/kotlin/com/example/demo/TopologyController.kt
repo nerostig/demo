@@ -34,23 +34,12 @@ class TopologyController (
         try {
             ResponseEntity.ok(service.saveOnly(request))
         } catch (ex: InvalidTopologyException) {
-            Problem.Companion.response(400, Problem.Companion.invalidTopology)
+            Problem.response(400, Problem.invalidTopology)
         } catch (ex: Exception) {
-            Problem.Companion.response(500, Problem.Companion.internalServerError)
+            Problem.response(500, Problem.internalServerError)
         }
 
-    @PostMapping("/simulate/{id}")
-    fun simulate(
-        @PathVariable id: Int,
-        @RequestParam slots: Int
-    ): ResponseEntity<Any> =
-        try {
-            ResponseEntity.ok(service.simulateServiceTopology(id, slots))
-        } catch (ex: TopologyNotFoundException) {
-            Problem.Companion.response(404, Problem.Companion.topologyNotFound)
-        } catch (ex: Exception) {
-            Problem.Companion.response(500, Problem.Companion.internalServerError)
-        }
+
 
     @DeleteMapping("/{id}")
     fun deleteTopology(@PathVariable id: Int): ResponseEntity<Any> =
@@ -58,9 +47,9 @@ class TopologyController (
             service.delete(id)
             ResponseEntity.noContent().build()
         } catch (ex: TopologyNotFoundException) {
-            Problem.Companion.response(404, Problem.Companion.topologyNotFound)
+            Problem.response(404, Problem.topologyNotFound)
         } catch (ex: Exception) {
-            Problem.Companion.response(500, Problem.Companion.internalServerError)
+            Problem.response(500, Problem.internalServerError)
         }
 
     @PutMapping("/{id:\\d+}")

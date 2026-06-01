@@ -14,7 +14,6 @@ import com.example.demo.pipeline.toDomain
 import com.example.demo.pipeline.toDomainGroups
 import com.example.demo.repository.TransactionManager
 import com.example.demo.repository_jdbi.local
-import com.example.demo.test.simulateTimeSlots
 import computeSchedulesOptimized
 //import computeScheduless
 import org.springframework.stereotype.Service
@@ -75,20 +74,7 @@ class TopologyService(
             tx.topologyRepository.delete(id)
         }
 
-    fun simulateServiceTopology(
-        id: Int,
-        slots: Int
-    ): SimulationOutput =
-        transactionManager.run { tx ->
-            val topology =
-                tx.topologyRepository.findById(id)
-                    ?: throw TopologyNotFoundException(id)
 
-            simulateTimeSlots(
-                topology = topology,
-                totalSlots = slots
-            )
-        }
 
 
 
