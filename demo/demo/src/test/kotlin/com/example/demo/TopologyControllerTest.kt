@@ -29,7 +29,6 @@ class TopologyControllerTest {
 
     @BeforeEach
     fun setUp() {
-        // Limpa o estado entre testes
         savedTopologyId = null
     }
 
@@ -41,7 +40,6 @@ class TopologyControllerTest {
                 mockMvc.perform(delete("/api/topology/$it"))
                     .andExpect(status().isNoContent)
             } catch (ex: Exception) {
-                // Ignora erro se o dado já foi deletado
             }
         }
     }

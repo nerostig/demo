@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Assertions.*
 class DemoApplicationTestss {
 
     // ======================
-    // Testes matemáticos base
     // ======================
 
     @Test
@@ -141,17 +140,7 @@ class DemoApplicationTestss {
     @Test
     fun testSolucaoCompletaComTolerancias() {
 
-//        val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 2.0)
-//        val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 2.0)
-//        val C = Sensor("C", desiredDutyCycle = 14.0, tolerance = 2.0)
-//        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 1.5)
-//        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 1.5)
 
-//        val A = Sensor("A", desiredDutyCycle = 19.0, tolerance = 1.5)
-//        val B = Sensor("B", desiredDutyCycle = 24.0, tolerance = 1.5)
-//        val C = Sensor("C", desiredDutyCycle = 13.0, tolerance = 1.0)
-//        val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.9)
-//        val E = Sensor("E", desiredDutyCycle = 9.0,  tolerance = 0.9)
 
         val A = Sensor("A", desiredDutyCycle = 18.0, tolerance = 2.0)  // ~ [16,20]
         val B = Sensor("B", desiredDutyCycle = 24.0, tolerance = 2.0)  // ~ [22,26]
@@ -185,7 +174,7 @@ class DemoApplicationTestss {
 
         val A = Sensor("A", desiredDutyCycle = 20.0, tolerance = 0.5)
         val B = Sensor("B", desiredDutyCycle = 25.0, tolerance = 0.5)
-        val C = Sensor("C", desiredDutyCycle = 20.0, tolerance = 0.5) // ⚠ igual a A
+        val C = Sensor("C", desiredDutyCycle = 20.0, tolerance = 0.5)
         val D = Sensor("D", desiredDutyCycle = 10.0, tolerance = 0.5)
         val E = Sensor("E", desiredDutyCycle = 10.0, tolerance = 0.5)
 
@@ -273,7 +262,6 @@ class DemoApplicationTestss {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
-        // Pelo menos um sensor deve ter valor atribuído
         assertTrue(schedules.any { it.parameter != null })
     }
 
@@ -300,7 +288,6 @@ class DemoApplicationTestss {
         // pelo menos um deve ter solução
         assertTrue(schedules.any { it.parameter != null })
 
-        // opcional: verificar consistência se ambos forem atribuídos
         val assigned = schedules.filter { it.parameter != null }
 
         if (assigned.size == 2) {
@@ -310,7 +297,6 @@ class DemoApplicationTestss {
             // não podem ser iguais
             assertNotEquals(a, b)
 
-            // devem ser coprimos (via período implícito no teu sistema)
             assertTrue(
                 areCoprime(
                     dutyCycleToPeriod(a),
@@ -345,10 +331,8 @@ class DemoApplicationTestss {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
-        // Deve haver pelo menos um sensor sem valor
        // assertTrue(schedules.any { it.parameter == null })
 
-        // Mas também pelo menos um com valor
         assertTrue(schedules.any { it.parameter != null })
     }
     @Test
