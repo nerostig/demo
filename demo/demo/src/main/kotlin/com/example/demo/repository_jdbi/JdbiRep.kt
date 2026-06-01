@@ -1,10 +1,12 @@
-package com.example.demo
+package com.example.demo.repository_jdbi
 
+import com.example.demo.services.TopologyNotFoundException
+import com.example.demo.repository.TopologyRepository
 import com.example.demo.domain.ScheduledNetworkTopology
 import org.springframework.stereotype.Component
 
 @Component
-class local(): TopologyRepository{
+class local(): TopologyRepository {
     private val storage = mutableMapOf<Int, ScheduledNetworkTopology>()
     private var nextId = (storage.keys.maxOrNull() ?: 0) + 1
 

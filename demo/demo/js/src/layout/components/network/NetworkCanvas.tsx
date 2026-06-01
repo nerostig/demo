@@ -73,23 +73,7 @@ export default function NetworkCanvas({
     const [popupNodeId, setPopupNodeId] = useState<string | null>(null)
     const [canvasSize, setCanvasSize] = useState({ width: 800, height: 500 })
 
-    /* ================= RESIZE ================= */
-    /*
-    useEffect(() => {
-        const container = canvasRef.current?.parentElement
-        if (!container) return
 
-        const obs = new ResizeObserver(entries => {
-            const { width, height } = entries[0].contentRect
-            setCanvasSize({ width, height: Math.max(400, height) })
-        })
-
-        obs.observe(container)
-        return () => obs.disconnect()
-    }, [])
-    */
-
-    /* =================  ================= */
 
     const getNodeColor = useCallback((nodeId: string) => {
         if (!colorAssignments) return null
@@ -301,7 +285,8 @@ export default function NetworkCanvas({
             {interactive && nodes.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <p className="text-muted-foreground text-sm">
-                        Duplo clique para adicionar sensores · clique para editar
+                        Duplo clique para adicionar sensores · clique para editar/
+                        Clique no botão Modo de seleção para ativar modo de ligação e criar vizinhos
                     </p>
                 </div>
             )}

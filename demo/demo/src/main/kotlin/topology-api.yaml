@@ -1,0 +1,354 @@
+openapi: 3.0.3
+
+info:
+  title: Topology Scheduling API
+  version: "1.0"
+  description: >
+    REST API for managing sensor network topologies.
+    Supports topology persistence, update, simulation, scheduling,
+    and retrieval of planned duty cycles and performance metrics.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+
+  /api/topology/save:
+    post:
+      summary: Save a topology without scheduling
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologySaveRequest'
+      responses:
+        '200':
+          description: Topology saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+        '400':
+          description: Invalid topology
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /api/topology/implement:
+    post:
+      summary: Plan and schedule a topology
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyRequest'
+      responses:
+        '200':
+          description: Topology planned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyScheduleResponse'
+        '400':
+          description: Invalid topology or duty cycle
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Scheduling failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /api/topology/{id}:
+    get:
+      summary: Get a topology by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Topology found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduledTopologyOutput'
+        '404':
+          description: Topology not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+    put:
+      summary: Update a topology and replan it
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyRequest'
+      responses:
+        '200':
+          description: Topology updated and replanned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyScheduleResponse'
+        '400':
+          description: Invalid topology
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Topology not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Scheduling failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+    delete:
+      summary: Delete a topology
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Topology deleted
+        '404':
+          description: Topology not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /api/topology/simulate/{id}:
+    post:
+      summary: Simulate a saved topology
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: slots
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Simulation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyScheduleResponse'
+        '404':
+          description: Topology not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+  /api/topology/all:
+    get:
+      summary: Get all stored topologies
+      responses:
+        '200':
+          description: List of scheduled topologies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduledTopologyOutput'
+
+components:
+  schemas:
+
+    TopologyRequest:
+      type: object
+      required: [sensors, adjacency]
+      properties:
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorInput'
+        adjacency:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    TopologySaveRequest:
+      type: object
+      required: [sensors, adjacency]
+      properties:
+        id:
+          type: integer
+          nullable: true
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorSaveInput'
+        adjacency:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    SensorInput:
+      type: object
+      required: [id, desiredDutyCycle, tolerance]
+      properties:
+        id:
+          type: string
+        x:
+          type: integer
+          nullable: true
+        y:
+          type: integer
+          nullable: true
+        desiredDutyCycle:
+          type: number
+          format: double
+        tolerance:
+          type: number
+          format: double
+        groupId:
+          type: string
+          nullable: true
+
+    SensorSaveInput:
+      type: object
+      required: [id, x, y, desiredDutyCycle, tolerance]
+      properties:
+        id:
+          type: string
+        x:
+          type: integer
+        y:
+          type: integer
+        desiredDutyCycle:
+          type: number
+          format: double
+        tolerance:
+          type: number
+          format: double
+        groupId:
+          type: string
+          nullable: true
+
+    SensorResultOutput:
+      type: object
+      properties:
+        id:
+          type: string
+        dutyCycle:
+          type: number
+          format: double
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        executionTimeMs:
+          type: integer
+          format: int64
+        memoryUsedKb:
+          type: integer
+          format: int64
+
+    TopologyScheduleResponse:
+      type: object
+      properties:
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorResultOutput'
+        adjacency:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        message:
+          type: string
+          nullable: true
+        performance:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    ScheduledTopologyOutput:
+      type: object
+      properties:
+        id:
+          type: integer
+        sensors:
+          type: array
+          items:
+            $ref: '#/components/schemas/SensorResultOutput'
+        adjacency:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        performance:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    Problem:
+      type: object
+      properties:
+        status:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string

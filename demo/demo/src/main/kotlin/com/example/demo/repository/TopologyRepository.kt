@@ -1,7 +1,6 @@
-package com.example.demo
+package com.example.demo.repository
 
 import com.example.demo.domain.ScheduledNetworkTopology
-import com.example.demo.domain.Sensor
 
 
 interface TopologyRepository {

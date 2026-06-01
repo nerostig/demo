@@ -7,9 +7,7 @@ import { motion } from 'framer-motion'
 import {Button} from "../layout/components/ui/button";
 import {Card, CardContent} from "../layout/components/ui/card";
 
-/* =========================
-   Tipos vindos do backend
-   ========================= */
+
 
 type SensorResultOutput = {
     id: string

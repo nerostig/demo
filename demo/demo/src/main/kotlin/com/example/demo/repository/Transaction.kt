@@ -1,4 +1,4 @@
-package com.example.demo
+package com.example.demo.repository
 
 interface Transaction {
     val topologyRepository: TopologyRepository

@@ -1,8 +1,8 @@
 package com.example.demo
 
 
-import com.example.demo.domain.Sensor
 import com.example.demo.pipeline.*
+import com.example.demo.services.TopologyService
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -12,7 +12,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import tools.jackson.databind.ObjectMapper
-import java.util.*
 
 @SpringBootTest
 @AutoConfigureMockMvc

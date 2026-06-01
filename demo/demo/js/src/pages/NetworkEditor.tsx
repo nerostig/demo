@@ -5,7 +5,6 @@ import { ArrowLeft, Link2, MousePointer, Play, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 
 import DutyCycleTimeline from '../layout/components/network/DutyCycleTimeline'
-import AlgorithmPanel from '../layout/components/network/AlgorithmPanel'
 import NodeProperties from '../layout/components/network/NodeProperties'
 import NetworkCanvas from '../layout/components/network/NetworkCanvas'
 import { Card, CardContent, CardHeader, CardTitle } from '../layout/components/ui/card'
@@ -145,32 +144,7 @@ export default function NetworkEditor() {
         enabled: topologyId !== null,
         queryFn: () => fetchTopology(topologyId!),
     })
-    /*
-    useEffect(() => {
-        if (!data) return
 
-        setNodes(
-            data.sensors.map(s => ({
-                id: s.id,
-                x: s.x ?? 0,
-                y: s.y ?? 0,
-                desiredDutyCycle: s.dutyCycleParameter ?? 0.5,
-                tolerance: 0.1,
-            }))
-        )
-
-        const rebuiltEdges: Edge[] = []
-        Object.entries(data.adjacency).forEach(([src, targets]) => {
-            targets.forEach(tgt => {
-                if (src < tgt) rebuiltEdges.push({ source: src, target: tgt })
-            })
-        })
-
-        setEdges(rebuiltEdges)
-        setResult(data)
-    }, [data])
-
-    */
     useEffect(() => {
         if (!data) return
 
@@ -230,16 +204,7 @@ export default function NetworkEditor() {
 
         return `S${i}`
     }
-    /*
-    const handleAddNode = useCallback((x: number, y: number) => {
-        //const id = `S${Date.now()}`
-        const id = nextId()
-        setNodes(prev => [...prev, { id, x, y, desiredDutyCycle: 0.5, tolerance: 0.1 }])
-        setSelectedNodeId(id)
-        setSelectedNodes([id])
-    }, [])
 
-    */
 
     const saveMutation = useMutation({
         mutationFn: (body: TopologySaveRequest) => saveTopology(topologyId,body),
@@ -270,7 +235,6 @@ export default function NetworkEditor() {
         return adjacency
     }
     const handleSave = () => {
-        // bloqueio imediato (sync, não depende do React state)
         if (savingRef.current || saveMutation.isPending) return
 
         if (nodes.length === 0) {
@@ -366,7 +330,6 @@ export default function NetworkEditor() {
             return
         }
 
-        //const groupId = `G${Date.now()}`
         const  groupId =nextGroupId(nodes)
 
             setNodes(prev =>
@@ -512,7 +475,17 @@ export default function NetworkEditor() {
                             setEdgeStart(null)
                         }}
                     >
-                        {edgeMode ? <Link2 /> : <MousePointer />}
+                        {edgeMode ? (
+                            <>
+                                <Link2 className="w-4 h-4 mr-1" />
+                                Modo Ligação (clique 2 nós)
+                            </>
+                        ) : (
+                            <>
+                                <MousePointer className="w-4 h-4 mr-1" />
+                                Modo de Seleção
+                            </>
+                        )}
                     </Button>
 
                     <Button size="sm" onClick={handleRun} disabled={isRunning}>

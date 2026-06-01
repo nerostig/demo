@@ -1,5 +1,7 @@
 import com.example.demo.domain.NetworkTopology
 import com.example.demo.domain.Sensor
+import com.example.demo.optimizer.areCoprimePercentagess
+import com.example.demo.optimizer.generateCandidates
 import kotlin.random.Random
 
 fun main() {

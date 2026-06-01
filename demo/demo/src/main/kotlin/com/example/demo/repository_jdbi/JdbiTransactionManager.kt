@@ -1,6 +1,8 @@
-package com.example.demo
+package com.example.demo.repository_jdbi
 
 
+import com.example.demo.repository.Transaction
+import com.example.demo.repository.TransactionManager
 import jakarta.inject.Named
 import org.jdbi.v3.core.Jdbi
 

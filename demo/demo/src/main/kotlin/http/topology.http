@@ -1,0 +1,50 @@
+POST http://localhost:8080/api/topolgyRequest/implement
+Content-Type: application/json
+
+{
+  "sensors": [
+    { "id": "A", "desiredDutyCycle": 20.0, "tolerance": 0.0 },
+    { "id": "B", "desiredDutyCycle": 25.0, "tolerance": 0.0 },
+    { "id": "C", "desiredDutyCycle": 15.0, "tolerance": 0.0 },
+    { "id": "D", "desiredDutyCycle": 10.0, "tolerance": 0.0 },
+    { "id": "E", "desiredDutyCycle": 9.0,  "tolerance": 0.0 }
+  ],
+  "adjacency": {
+    "A": ["B", "C"],
+    "B": ["A", "C", "E"],
+    "C": ["A", "B", "D"],
+    "D": ["C", "E"],
+    "E": ["B", "D"]
+  }
+}
+
+
+###
+POST http://localhost:8080/api/topolgyRequest/implement/group
+Content-Type: application/json
+
+{
+  "sensorGroups": [
+    {
+      "sensorIds": ["A", "B"],
+      "desiredDutyCycle": 20.0,
+      "tolerance": 0.0
+    },
+    {
+      "sensorIds": ["C", "D", "E"],
+      "desiredDutyCycle": 15.0,
+      "tolerance": 0.0
+    }
+  ],
+  "adjacency": {
+    "A": ["B", "C"],
+    "B": ["A", "C", "E"],
+    "C": ["A", "B", "D"],
+    "D": ["C", "E"],
+    "E": ["B", "D"]
+  }
+}
+
+###
+GET http://localhost:8080/api/topology/1
+

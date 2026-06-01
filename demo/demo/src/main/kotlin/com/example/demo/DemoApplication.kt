@@ -14,47 +14,28 @@ import javax.sql.DataSource
 class DemoApplication
 
 @Configuration
-class DatabaseConfig {
+class DatabaseConfig(
+    @Value("\${spring.datasource.url}") private val url1: String,
+    @Value("\${spring.datasource.username}") private val user1: String,
+    @Value("\${spring.datasource.password}") private val password1: String
+) {
 
     @Bean
     fun dataSource(): DataSource =
         PGSimpleDataSource().apply {
-            setURL("jdbc:postgresql://localhost:5432/topologydb")
-            user = "user"
-            password = "pass"
+            setURL(url1)
+            this.user = user1
+            this.password = password1
+//            setURL("jdbc:postgresql://localhost:5432/topologydb")
+//            user = "user"
+//            password = "pass"
         }
 }
 
 
 @Configuration
 class JdbiConfig {
-//
-//    @Bean
-//    fun jdbi(
-//        @Value("\${spring.datasource.url}") url: String,
-//        @Value("\${spring.datasource.username}") username: String,
-//        @Value("\${spring.datasource.password}") password: String
-//    ): Jdbi {
-//        return Jdbi.create(url, username, password)
-//    }
 
-//    @Bean
-//    fun jdbi(
-//        @Value("\${spring.datasource.url}") url: String,
-//        @Value("\${spring.datasource.username}") username: String,
-//        @Value("\${spring.datasource.password}") password: String
-//    ): Jdbi {
-//        val jdbi = Jdbi.create(url, username, password)
-//
-//        jdbi.useHandle<Exception> { handle ->
-//            val sql = this::class.java.getResource("/sql/topologies.sql")!!
-//                .readText()
-//
-//            handle.createScript(sql).execute()
-//        }
-//
-//        return jdbi
-//    }
 
     @Bean
     fun jdbi(dataSource: DataSource): Jdbi {

@@ -1,5 +1,8 @@
-package com.example.demo
+package com.example.demo.repository_jdbi
 
+import com.example.demo.repository.TopologyRepository
+import com.example.demo.repository.Transaction
+import com.example.demo.repository.JdbiTopologyRepository
 import org.jdbi.v3.core.Handle
 
 class JdbiTransaction(

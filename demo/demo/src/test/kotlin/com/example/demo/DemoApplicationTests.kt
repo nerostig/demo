@@ -1,30 +1,21 @@
 package com.example.demo
 
 import DutyCycleTreeOptimizer
-import GlobalNogoodStore
-import SearchContext
-import areCoprime
-import areCoprimePercentages
+
 
 import com.example.demo.domain.NetworkTopology
 import com.example.demo.domain.Sensor
+import com.example.demo.optimizer.GlobalNogoodStore
+import com.example.demo.optimizer.SearchContext
+import com.example.demo.optimizer.areCoprime
+import com.example.demo.optimizer.areCoprimePercentages
+import com.example.demo.optimizer.dutyCycleToPeriod
+import com.example.demo.optimizer.gcd
 import computeSchedulesOptimized
-import dutyCycleToPeriod
-import gcd
+
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.junit.jupiter.api.Assertions.*
-@SpringBootTest
-class DemoApplicationTests {
-
-	@Test
-	fun contextLoads() {
-	}
-
-}
-
-
-
 class DemoApplicationTestss {
 
     // ======================

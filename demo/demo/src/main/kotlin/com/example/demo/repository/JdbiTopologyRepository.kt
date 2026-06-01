@@ -1,10 +1,9 @@
-package com.example.demo
+package com.example.demo.repository
 
+import com.example.demo.services.TopologyNotFoundException
 import com.example.demo.domain.ScheduledNetworkTopology
 import com.example.demo.domain.Sensor
 import org.jdbi.v3.core.Handle
-import org.springframework.stereotype.Component
-
 
 
 class JdbiTopologyRepository(
@@ -98,7 +97,7 @@ class JdbiTopologyRepository(
     override fun findById(id: Int): ScheduledNetworkTopology? {
 
         // =========================
-        // 0. LOAD TOPOLOGY NAME
+        //LOAD TOPOLOGY
         // =========================
         val name = handle.createQuery(
             """
@@ -189,7 +188,6 @@ class JdbiTopologyRepository(
         )
     }
 
-    /* ================= UPDATE ================= */
 
 
     /* ================= DELETE ================= */
@@ -229,6 +227,7 @@ class JdbiTopologyRepository(
         }
     }
 
+    /* ================= UPDATE ================= */
     override fun update(id: Int, topology: ScheduledNetworkTopology): ScheduledNetworkTopology {
 
         val exists = handle.createQuery(
