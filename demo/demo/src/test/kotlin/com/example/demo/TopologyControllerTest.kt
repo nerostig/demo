@@ -26,22 +26,80 @@ class TopologyControllerTest {
     private val objectMapper = ObjectMapper()
 
     private var savedTopologyId: Int? = null
+    private lateinit var username: String
+    private lateinit var password: String
+    private lateinit var authHeader: String
+
+    // ------------------------
+    // AUTH SETUP
+    // ------------------------
+
+    private fun createUserAndLogin() {
+        username = "test-user"
+        password = "Test1234!"
+
+        // 1. tenta criar user
+        val createResponse = mockMvc.perform(
+            post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        UserCreateInputModel(username, password)
+                    )
+                )
+        ).andReturn().response
+
+        // aceita 201 (criado) OU 400 (já existe)
+        if (createResponse.status != 201 && createResponse.status != 400) {
+            error("Unexpected status on user creation: ${createResponse.status}")
+        }
+
+        val tokenResponse = mockMvc.perform(
+            post("/api/users/token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        UserCreateTokenInputModel(username, password)
+                    )
+                )
+        )
+            .andExpect(status().isOk)
+            .andReturn()
+            .response
+
+        val json = objectMapper.readTree(tokenResponse.contentAsString)
+
+        val token = json["token"]?.asText()
+            ?: error("Token not found in response: $json")
+
+        authHeader = "bearer $token"
+    }
 
     @BeforeEach
     fun setUp() {
         savedTopologyId = null
+        createUserAndLogin()
+
     }
 
     @AfterEach
     fun tearDown() {
-        // Limpa dados criados durante os testes
+
+        //  limpar topology
         savedTopologyId?.let {
             try {
                 mockMvc.perform(delete("/api/topology/$it"))
                     .andExpect(status().isNoContent)
-            } catch (ex: Exception) {
-            }
+            } catch (_: Exception) {}
         }
+
+        try {
+            mockMvc.perform(
+                post("/api/logout")
+                    .header("Authorization", authHeader)
+            )
+                .andExpect(status().isNoContent)
+        } catch (_: Exception) {}
     }
 
     @Test
@@ -64,17 +122,15 @@ class TopologyControllerTest {
 
         val json = objectMapper.writeValueAsString(request)
 
-        mockMvc.perform(post("/api/topology")
+
+
+        val response = mockMvc.perform(post("/api/topology")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").isNumber)
             .andExpect(jsonPath("$.name").value("Test Topology"))
-
-        // Salva o ID para limpeza
-        val response = mockMvc.perform(post("/api/topology")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
             .andReturn().response
         val content = response.contentAsString
         val id = objectMapper.readTree(content).get("id").asInt()
@@ -102,14 +158,13 @@ class TopologyControllerTest {
 
         val json = objectMapper.writeValueAsString(initialRequest)
         val response = mockMvc.perform(post("/api/topology")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
             .andReturn().response
         val content = response.contentAsString
         val id = objectMapper.readTree(content).get("id").asInt()
-        savedTopologyId = id
 
-        // Atualiza a topologia
         val updateRequest = TopologySaveRequest(
             id = id,
             name = "Updated",
@@ -127,10 +182,17 @@ class TopologyControllerTest {
         )
 
         mockMvc.perform(put("/api/topology/$id")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(updateRequest)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.name").value("Updated"))
+
+        mockMvc.perform(get("/api/topology/$id")
+            .header("Authorization", authHeader))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.name").value("Updated"))
+        savedTopologyId = id
     }
 
     @Test
@@ -153,7 +215,8 @@ class TopologyControllerTest {
         )
 
         val json = objectMapper.writeValueAsString(request)
-        val response = mockMvc.perform(post("/api/topology/save")
+        val response = mockMvc.perform(post("/api/topology")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(json))
             .andReturn().response
@@ -161,12 +224,11 @@ class TopologyControllerTest {
         val id = objectMapper.readTree(content).get("id").asInt()
         savedTopologyId = id
 
-        // Deleta a topologia
+        // Apaga a topologia
         mockMvc.perform(delete("/api/topology/$id"))
             .andExpect(status().isNoContent)
 
-        // Verifica que não existe mais
-        mockMvc.perform(get("/api/topology/$id"))
+        mockMvc.perform(get("/api/topology/$id").header("Authorization", authHeader))
             .andExpect(status().isNotFound)
     }
 
@@ -234,28 +296,27 @@ class TopologyControllerTest {
         val json2 = objectMapper.writeValueAsString(request2)
 
         val response1 = mockMvc.perform(post("/api/topology")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(json1))
             .andReturn().response
         val id1 = objectMapper.readTree(response1.contentAsString).get("id").asInt()
 
         val response2 = mockMvc.perform(post("/api/topology")
+            .header("Authorization", authHeader)
             .contentType(MediaType.APPLICATION_JSON)
             .content(json2))
             .andReturn().response
         val id2 = objectMapper.readTree(response2.contentAsString).get("id").asInt()
 
-        // Salva IDs para limpeza
         savedTopologyId = id1
         val tempId = id2
 
-        // Verifica todas as topologias
-        mockMvc.perform(get("/api/topology"))
+        mockMvc.perform(get("/api/topology").header("Authorization", authHeader))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(2))
 
-        // Limpa a segunda topologia
-        mockMvc.perform(delete("/api/topology/$tempId"))
+        mockMvc.perform(delete("/api/topology/$tempId").header("Authorization", authHeader))
             .andExpect(status().isNoContent)
     }
 }

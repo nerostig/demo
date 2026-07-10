@@ -14,7 +14,7 @@ import kotlin.math.round
     ctx: SearchContext,
     topology: NetworkTopology
 ): Int {
-    val percentage =round(100.0 / period) //round(100.0 / period)
+    val percentage =round(100.0 / period)
     var impact = 0
 
     for (neighbor in topology.neighbors(sensor)) {

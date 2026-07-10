@@ -39,6 +39,31 @@ fun areCoprimePercentages(
     }
 }
 
+//fun areCoprimePercentages(
+//    p1: Double,
+//    p2: Double,
+//    ctx: SearchContext
+//): Boolean {
+//
+//    val key = p1 to p2
+//    ctx.coprimeCache[key]?.let {
+//        return it
+//    }
+//
+//    val result = areCoprime(
+//        dutyCycleToPeriod(p1),
+//        dutyCycleToPeriod(p2)
+//    )
+//
+//    val newCtx = ctx.copyWithCoprime(key, result)
+//
+//
+//    return result
+//}
+
+
+
+
 // =====================  =====================
 
 
@@ -48,12 +73,9 @@ fun generateCandidates(sensor: Sensor): List<Int> {
         100.0 / (sensor.desiredDutyCycle + sensor.tolerance)
     ).toInt()
 
-    println("${sensor.id }")
-    println(sensor.desiredDutyCycle - sensor.tolerance)
     val maxPeriod = kotlin.math.round(
         100.0 / (sensor.desiredDutyCycle - sensor.tolerance)
     ).toInt()
-    println("${sensor.id }> $minPeriod e $maxPeriod")
 
     return (minPeriod..maxPeriod).toList()
 }

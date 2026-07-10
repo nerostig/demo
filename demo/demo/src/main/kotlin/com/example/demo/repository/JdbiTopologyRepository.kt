@@ -12,27 +12,22 @@ class JdbiTopologyRepository(
 
     /* ================= SAVE ================= */
 
-    override fun save(topology: ScheduledNetworkTopology): Int {
+    override fun save(topology: ScheduledNetworkTopology,userId: Int,): Int {
 
-        println("========== REPOSITORY SAVE START ==========")
-        println("TOPOLOGY NAME: ${topology.name}")
-        println("SENSORS COUNT: ${topology.adjacency.keys.size}")
-        println("ADJACENCY SIZE: ${topology.adjacency.size}")
-        println("DUTY CYCLES SIZE: ${topology.dutyCycles.size}")
+
 
         val topologyId = handle.createUpdate(
-            "INSERT INTO topologies(name) VALUES (:name)"
+            "INSERT INTO topologies(user_id, name) VALUES (:uid, :name)" //"INSERT INTO topologies(name) VALUES (:name)"
         )
+            .bind("uid", userId)
             .bind("name", topology.name)
             .executeAndReturnGeneratedKeys("id")
             .mapTo(Int::class.java)
             .one()
 
-        println("INSERTED TOPOLOGY ID = $topologyId")
 
         // ================= SENSORS =================
         topology.adjacency.keys.forEach { sensor ->
-            println("INSERT SENSOR: ${sensor.id} (topology=$topologyId)")
 
             handle.createUpdate(
                 """
@@ -54,10 +49,8 @@ class JdbiTopologyRepository(
                 .execute()
         }
 
-        // ================= EDGES =================
         topology.adjacency.forEach { (source, targets) ->
             targets.forEach { target ->
-                println("INSERT EDGE: ${source.id} -> ${target.id}")
 
                 handle.createUpdate(
                     """
@@ -74,7 +67,6 @@ class JdbiTopologyRepository(
 
         // ================= DUTY CYCLES =================
         topology.dutyCycles.forEach { (sensor, value) ->
-            println("INSERT DUTY CYCLE: ${sensor.id} = $value")
 
             handle.createUpdate(
                 """
@@ -88,34 +80,28 @@ class JdbiTopologyRepository(
                 .execute()
         }
 
-        println("========== REPOSITORY SAVE END ==========")
 
         return topologyId
     }
     /* ================= FIND BY ID ================= */
 
-    override fun findById(id: Int): ScheduledNetworkTopology? {
+    override fun findById(id: Int,userId: Int): ScheduledNetworkTopology? {
 
-        // =========================
-        //LOAD TOPOLOGY
-        // =========================
+
         val name = handle.createQuery(
             """
         SELECT name
         FROM topologies
-        WHERE id = :id
+        WHERE id = :id  AND user_id = :uid
         """
         )
             .bind("id", id)
+            .bind("uid", userId)
             .mapTo(String::class.java)
             .findOne()
             .orElse(null)
 
-        if (name == null) return null
 
-        // =========================
-        // 1. LOAD SENSORS
-        // =========================
         val sensors = handle.createQuery(
             """
         SELECT id, group_id, x, y, desired_duty_cycle, tolerance
@@ -140,9 +126,7 @@ class JdbiTopologyRepository(
 
         val sensorById = sensors.associateBy { it.id }
 
-        // =========================
-        // 2. LOAD EDGES
-        // =========================
+
         val adjacency: MutableMap<Sensor, MutableList<Sensor>> =
             sensors.associateWith { mutableListOf<Sensor>() }.toMutableMap()
 
@@ -161,9 +145,7 @@ class JdbiTopologyRepository(
             }
             .list()
 
-        // =========================
-        // 3. LOAD DUTY CYCLES
-        // =========================
+
         val dutyCycles = handle.createQuery(
             """
         SELECT sensor_id, value
@@ -178,9 +160,7 @@ class JdbiTopologyRepository(
             }
             .toMap()
 
-        // =========================
-        // 4. RETURN DOMAIN
-        // =========================
+
         return ScheduledNetworkTopology(
             name = name,
             adjacency = adjacency,
@@ -214,26 +194,30 @@ class JdbiTopologyRepository(
 
     /* ================= FIND ALL ================= */
 
-    override fun findAll(): Map<Int, ScheduledNetworkTopology> {
+    override fun findAll(userId: Int): Map<Int, ScheduledNetworkTopology> {
 
         val ids = handle.createQuery(
-            "SELECT id FROM topologies"
+            "SELECT id FROM topologies WHERE user_id = :uid"
         )
+            .bind("uid", userId)
             .mapTo(Int::class.java)
             .list()
 
         return ids.associateWith { id ->
-            findById(id)!!
+            val t = findById(id, userId)
+            println("TOPLOGY id=$id -> $t")
+            t!!
         }
     }
 
     /* ================= UPDATE ================= */
-    override fun update(id: Int, topology: ScheduledNetworkTopology): ScheduledNetworkTopology {
+    override fun update(id: Int, topology: ScheduledNetworkTopology,userId: Int): ScheduledNetworkTopology {
 
         val exists = handle.createQuery(
-            "SELECT 1 FROM topologies WHERE id = :id"
+            "SELECT 1 FROM topologies WHERE id = :id AND user_id = :uid"
         )
             .bind("id", id)
+            .bind("uid", userId)
             .mapTo(Int::class.java)
             .findOne()
             .isPresent
@@ -241,9 +225,10 @@ class JdbiTopologyRepository(
         if (!exists) throw TopologyNotFoundException(id)
 
         handle.createUpdate(
-            "UPDATE topologies SET name = :name WHERE id = :id"
+            "UPDATE topologies SET name = :name WHERE id = :id AND user_id = :uid"
         )
             .bind("id", id)
+            .bind("uid", userId)
             .bind("name", topology.name)
             .execute()
 
@@ -305,7 +290,7 @@ class JdbiTopologyRepository(
                 .execute()
         }
 
-        return findById(id)
+        return findById(id,userId)
             ?: throw TopologyNotFoundException(id)
     }
 }

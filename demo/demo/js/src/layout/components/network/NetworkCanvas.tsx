@@ -49,7 +49,6 @@ interface Props {
     interactive?: boolean
 }
 
-/* ================= COMPONENT ================= */
 
 export default function NetworkCanvas({
                                           nodes,
@@ -67,7 +66,7 @@ export default function NetworkCanvas({
                                       }: Props) {
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
-
+    const containerRef = useRef<HTMLDivElement | null>(null)
     const [dragging, setDragging] = useState<string | null>(null)
     const [dragMoved, setDragMoved] = useState(false)
     const [popupNodeId, setPopupNodeId] = useState<string | null>(null)
@@ -164,7 +163,7 @@ export default function NetworkCanvas({
             const color = getNodeColor(node.id)
 
             const baseColor = color || (isSelected ? '#0ea5e9' : '#475569')
-            // Glow
+            //
             if (color || isSelected) {
                 ctx.beginPath();
                 const gradient = ctx.createRadialGradient(node.x, node.y, NODE_RADIUS, node.x, node.y, NODE_RADIUS * 2.5);
@@ -216,6 +215,38 @@ export default function NetworkCanvas({
     useEffect(() => {
         draw()
     }, [draw])
+    useEffect(() => {
+        if (nodes.length === 0) return
+
+        const padding = 80
+
+        const maxX = Math.max(...nodes.map(n => n.x)) + padding
+        const maxY = Math.max(...nodes.map(n => n.y)) + padding
+
+        setCanvasSize(prev => ({
+            width: Math.max(prev.width, maxX),
+            height: Math.max(prev.height, maxY),
+        }))
+    }, [nodes])
+
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        const observer = new ResizeObserver(entries => {
+            const { width, height } = entries[0].contentRect
+
+            if (width && height) {
+                setCanvasSize(prev => ({
+                    width: Math.max(prev.width, width),
+                    height: Math.max(prev.height, height),
+                }))
+            }
+        })
+
+        observer.observe(container)
+        return () => observer.disconnect()
+    }, [])
 
     /* ================= EVENTS ================= */
 
@@ -265,10 +296,12 @@ export default function NetworkCanvas({
 
     const popupNode = nodes.find(n => n.id === popupNodeId) ?? null
 
-    /* ================= RENDER ================= */
 
     return (
-        <div className="relative w-full h-full min-h-[400px]">
+        <div
+            ref={containerRef}
+            className="relative w-full h-full overflow-auto"
+        >
             <canvas
                 ref={canvasRef}
                 width={canvasSize.width}

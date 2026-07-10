@@ -4,18 +4,13 @@ import com.example.demo.domain.SimulationOutput
 import com.example.demo.domain.TopologyPlanner
 import com.example.demo.domain.toOutput
 import com.example.demo.domain.toResponse
-import com.example.demo.pipeline.PerformanceMetrics
 import com.example.demo.pipeline.ScheduledTopologyOutput
-import com.example.demo.pipeline.TopologyGroupRequest
 import com.example.demo.pipeline.TopologyRequest
 import com.example.demo.pipeline.TopologySaveRequest
 import com.example.demo.pipeline.TopologyScheduleResponse
 import com.example.demo.pipeline.toDomain
-import com.example.demo.pipeline.toDomainGroups
 import com.example.demo.repository.TransactionManager
-import com.example.demo.repository_jdbi.local
 import computeSchedulesOptimized
-//import computeScheduless
 import org.springframework.stereotype.Service
 
 class InvalidTopologyException : RuntimeException()
@@ -31,7 +26,7 @@ class TopologyService(
     private val planner: TopologyPlanner,
     private val transactionManager: TransactionManager
 ) {
-    fun saveOnly(request: TopologySaveRequest): ScheduledTopologyOutput {
+    fun saveOnly(request: TopologySaveRequest,userId: Int): ScheduledTopologyOutput {
 
 
         val topology = request.toDomain()
@@ -39,31 +34,31 @@ class TopologyService(
 
 
         val id = transactionManager.run { tx ->
-            val result = tx.topologyRepository.save(topology)
+            val result = tx.topologyRepository.save(topology,userId)
             result
         }
 
         val saved = transactionManager.run { tx ->
-            val result = tx.topologyRepository.findById(id)
+            val result = tx.topologyRepository.findById(id,userId)
             result ?: throw TopologyNotFoundException(id)
         }
 
 
         return saved.toOutput(id, null)
     }
-    fun findById(id: Int): ScheduledTopologyOutput =
+    fun findById(id: Int,userId: Int): ScheduledTopologyOutput =
         transactionManager.run { tx ->
             val topology =
-                tx.topologyRepository.findById(id)
+                tx.topologyRepository.findById(id,userId)
                     ?: throw TopologyNotFoundException(id)
 
             topology.toOutput(id, null)
         }
 
-    fun findAll(): List<ScheduledTopologyOutput> =
+    fun findAll(userId: Int): List<ScheduledTopologyOutput> =
         transactionManager.run { tx ->
             tx.topologyRepository
-                .findAll()
+                .findAll(userId)
                 .map { (id, topology) ->
                     topology.toOutput(id, null)
                 }
@@ -80,19 +75,20 @@ class TopologyService(
 
     fun updateAndReplan(
         id: Int,
-        request: TopologySaveRequest
+        request: TopologySaveRequest,
+        userId: Int
     ): ScheduledTopologyOutput {
 
         return transactionManager.run { tx ->
 
             val repo = tx.topologyRepository
 
-            val existing = repo.findById(id)
+            val existing = repo.findById(id,userId)
                 ?: throw TopologyNotFoundException(id)
 
             val topology = request.toDomain()
 
-            val updated=repo.update(id, topology)
+            val updated=repo.update(id, topology,userId)
 
 
              updated.toOutput(id, null)
@@ -104,32 +100,18 @@ class TopologyService(
 
         try {
 
-            val memBefore = usedMemoryKb()
-            val start = System.nanoTime()
-
             val topology = request.toDomain()
 
 
             val schedules = computeSchedulesOptimized(topology)
-            println("sehdules -> $schedules")
 
             val scheduledTopology =
-                planner.applySchedules(topology, schedules)
-
-            println("scheduledTopology -> $scheduledTopology")
-
-            //val id= repository.save(scheduledTopology)
-
-            val end = System.nanoTime()
-            val memAfter = usedMemoryKb()
-
-            val metrics = PerformanceMetrics(
-                executionTimeMs = (end - start) / 1_000_000,
-                memoryUsedKb = memAfter - memBefore
-            )
+                planner.applySchedules(topology, schedules.first)
 
 
-            return scheduledTopology.toResponse(metrics)
+
+
+            return scheduledTopology.toResponse(schedules.second)
 
         } catch (ex: IllegalArgumentException) {
             throw InvalidTopologyException()
@@ -138,9 +120,6 @@ class TopologyService(
         }
     }
 
-    private fun usedMemoryKb(): Long {
-        val rt = Runtime.getRuntime()
-        return (rt.totalMemory() - rt.freeMemory()) / 1024
-    }
+
 }
 

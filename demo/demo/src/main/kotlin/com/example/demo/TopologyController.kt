@@ -1,5 +1,6 @@
 package com.example.demo
 
+import com.example.demo.pipeline.AuthenticatedUser
 import com.example.demo.pipeline.Problem
 import com.example.demo.pipeline.ScheduledTopologyOutput
 import com.example.demo.pipeline.TopologyRequest
@@ -29,10 +30,11 @@ class TopologyController (
 
     @PostMapping//("/save")
     fun save(
+        user: AuthenticatedUser,
         @RequestBody request: TopologySaveRequest
     ): ResponseEntity<Any> =
         try {
-            ResponseEntity.ok(service.saveOnly(request))
+            ResponseEntity.ok(service.saveOnly(request,user.user.id,))
         } catch (ex: InvalidTopologyException) {
             Problem.response(400, Problem.invalidTopology)
         } catch (ex: Exception) {
@@ -54,11 +56,12 @@ class TopologyController (
 
     @PutMapping("/{id:\\d+}")
     fun updateTopology(
+        user: AuthenticatedUser,
         @PathVariable id: Int,
         @RequestBody request: TopologySaveRequest
     ): ResponseEntity<Any> =
         try {
-            ResponseEntity.ok(service.updateAndReplan(id, request))
+            ResponseEntity.ok(service.updateAndReplan(id, request,user.user.id,))
         } catch (ex: TopologyNotFoundException) {
             Problem.Companion.response(404, Problem.Companion.topologyNotFound)
         } catch (ex: InvalidTopologyException) {
@@ -72,6 +75,8 @@ class TopologyController (
         @RequestBody request: TopologyRequest
     ): ResponseEntity<*> =
         try {
+
+
             ResponseEntity.ok(service.plan(request))
         } catch (ex: InvalidTopologyException) {
             Problem.Companion.response(400, Problem.Companion.invalidTopology)
@@ -87,16 +92,17 @@ class TopologyController (
 
 
     @GetMapping("/{id}")
-    fun findById(@PathVariable id: Int): ResponseEntity<Any> =
+    fun findById( user: AuthenticatedUser,
+        @PathVariable id: Int): ResponseEntity<Any> =
         try {
-            ResponseEntity.ok(service.findById(id))
+            ResponseEntity.ok(service.findById(id,user.user.id))
         }catch (ex: TopologyNotFoundException) {
             Problem.Companion.response(404, Problem.Companion.topologyNotFound)
         }
 
     @GetMapping//("/all")
-    fun findAll(): ResponseEntity<List<ScheduledTopologyOutput>> =
-        ResponseEntity.ok(service.findAll())
+    fun findAll( user: AuthenticatedUser,): ResponseEntity<List<ScheduledTopologyOutput>> =
+        ResponseEntity.ok(service.findAll(user.user.id))
 
 
 }

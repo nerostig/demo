@@ -14,7 +14,6 @@ interface NodePropertiesProps {
     onDelete: (nodeId: string) => void
 }
 
-/* ---------- Component ---------- */
 
 export default function NodeProperties({
                                            node,

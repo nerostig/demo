@@ -1,54 +1,75 @@
 package com.example.demo.optimizer
 
 import com.example.demo.domain.Sensor
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 
 data class Nogood(
     val assignments: Map<Sensor, Double>
 )
 
-// ===================== OTIMIZADOR =====================
-
-
-
 class GlobalNogoodStore {
+    private val index = ConcurrentHashMap<Sensor, CopyOnWriteArrayList<Nogood>>()
+    private val locks = ConcurrentHashMap<Sensor, Any>()
 
-    private val nogoods = mutableListOf<Nogood>()
-    private val lock = Any()
+
+
+
+    private fun lockFor(sensor: Sensor): Any =
+        locks.computeIfAbsent(sensor) { Any() }
+
 
     fun add(nogood: Nogood) {
-        synchronized(lock) {
-            if (nogoods.none { it.assignments == nogood.assignments }) {
-                nogoods.add(nogood)
+        nogood.assignments.keys.forEach { sensor ->
+            val list = index.getOrPut(sensor) { CopyOnWriteArrayList() }
+            synchronized(lockFor(sensor)) {
+
+                list.removeIf { existing ->
+                    nogood.assignments.all { (k, v) -> existing.assignments[k] == v }
+                }
+
+                val subsumed = list.any { existing ->
+                    existing.assignments.all { (k, v) -> nogood.assignments[k] == v }
+                }
+                if (!subsumed) {
+
+                    val idx = list.indexOfFirst { it.assignments.size > nogood.assignments.size }
+                    if (idx == -1) list.add(nogood) else list.add(idx, nogood)
+                }
             }
         }
     }
 
-    fun snapshot(): List<Nogood> {
-        synchronized(lock) {
-            return nogoods.toList()
-        }
-    }
+
+
+    fun getFor(sensor: Sensor): List<Nogood> =
+        index[sensor] ?: emptyList()
+
+
+
+
 }
 
 
- fun violatesNogood(
-    assignment: Map<Sensor, Double>,
-    ctx: SearchContext
-): Boolean {
+fun violatesNogood(sensor: Sensor, assignment: Map<Sensor, Double>, ctx: SearchContext): Boolean {
 
-    for (nogood in ctx.localNogoods) {
-        if (nogood.assignments.all { (s, v) -> assignment[s] == v }) {
-            return true
-        }
+    val assignmentSize = assignment.size
+
+    // locais
+
+
+    ctx.localNogoodIndex[sensor]?.forEach { nogood ->
+        if (nogood.assignments.size <= assignmentSize &&
+            nogood.assignments.all { (s, v) -> assignment[s] == v }) return true
     }
+    // globais
 
-    for (nogood in ctx.globalNogoods.snapshot()) {
-        if (nogood.assignments.all { (s, v) -> assignment[s] == v }) {
-            return true
-        }
+
+    ctx.globalNogoods.getFor(sensor).forEach { nogood ->
+        if (nogood.assignments.size <= assignmentSize &&
+            nogood.assignments.all { (s, v) -> assignment[s] == v }) return true
     }
-
     return false
 }
 

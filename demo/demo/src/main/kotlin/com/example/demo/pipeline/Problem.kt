@@ -22,7 +22,19 @@ class Problem(
                 .header("Content-Type", MEDIA_TYPE)
                 .body(problem)
 
-        // ===== 4xx =====
+
+        val insecurePassword =
+            Problem("Password does not meet security requirements")
+
+        val userAlreadyExists =
+            Problem("User already exists")
+
+        val userOrPasswordAreInvalid =
+            Problem("Username or password are invalid")
+
+        val targetUserNotFound =
+            Problem("Target user not found")
+
         val invalidRequestContent =
             Problem("Invalid request content")
 
@@ -38,7 +50,6 @@ class Problem(
         val invalidDutyCycle =
             Problem("Invalid duty cycle parameters")
 
-        // ===== 5xx =====
         val schedulingFailed =
             Problem("Failed to compute duty cycle schedule")
 

@@ -6,26 +6,26 @@ import Networks from "./pages/Networks";
 import NetworkEditor from "./pages/NetworkEditor";
 import About from "./pages/About";
 import React from "react";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 
 
 
 const App = () => {
     return (
-        <Router>
-            <Routes>
-                <Route element={<AppLayout />}>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/networks" element={<Networks />} />
-                    <Route path="/editor/:id" element={<NetworkEditor />} />
-                    /*<Route path="/about" element={<About />} />*/
-                </Route>
+        <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-                {/*<Route path="*" element={<PageNotFound />} />*/}
-            </Routes>
+            <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/networks" element={<Networks />} />
+                <Route path="/editor/:id" element={<NetworkEditor />} />
+            </Route>
+        </Routes>
+    );
+};
 
 
-        </Router>
-    )
-}
 
 export default App

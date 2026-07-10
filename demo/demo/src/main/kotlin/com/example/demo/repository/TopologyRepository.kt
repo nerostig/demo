@@ -5,12 +5,12 @@ import com.example.demo.domain.ScheduledNetworkTopology
 
 interface TopologyRepository {
 
-    fun save (ScheduledNetworkTopology: ScheduledNetworkTopology):Int
+    fun save (ScheduledNetworkTopology: ScheduledNetworkTopology,userId: Int):Int
 
-    fun findById(id: Int): ScheduledNetworkTopology?
-    fun update(id: Int, topology: ScheduledNetworkTopology):ScheduledNetworkTopology
+    fun findById(id: Int,userId: Int): ScheduledNetworkTopology?
+    fun update(id: Int, topology: ScheduledNetworkTopology,userId: Int):ScheduledNetworkTopology
 
-    fun findAll():  Map<Int, ScheduledNetworkTopology>
+    fun findAll(userId: Int):  Map<Int, ScheduledNetworkTopology>
     fun delete(id: Int)
 
 }

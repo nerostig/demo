@@ -45,9 +45,7 @@ async function deleteTopology(id: number): Promise<void> {
     }
 }
 
-/* =========================
-   Componente
-   ========================= */
+
 
 export default function Networks() {
     const queryClient = useQueryClient()
@@ -90,7 +88,6 @@ export default function Networks() {
                     <div className="w-6 h-6 border-2 border-muted border-t-primary rounded-full animate-spin" />
                 </div>
             ) : networks.length === 0 ? (
-                /* Empty state */
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16">
                         <Radio className="w-12 h-12 text-muted-foreground/20 mb-4" />

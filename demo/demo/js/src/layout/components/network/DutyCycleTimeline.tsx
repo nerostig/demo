@@ -21,7 +21,6 @@ interface Props {
     performance?: PerformanceMetrics
 }
 
-/* ---------- Component ---------- */
 
 export default function DutyCycleTimeline({
                                               assignments,
@@ -37,14 +36,14 @@ export default function DutyCycleTimeline({
                     Duty Cycle por Sensor
                 </CardTitle>
 
-                {/* MESSAGE  */}
+                {/* message  */}
                 {message && (
                     <p className="text-xs text-muted-foreground">
                         {message}
                     </p>
                 )}
 
-                {/* MÉTRICAS DO ALGORITMO */}
+                {/* Algoritm metrics */}
                 {performance && (
                     <div className="grid grid-cols-2 gap-4 pt-2 text-xs">
                         <div>

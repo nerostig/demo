@@ -29,7 +29,7 @@ export default function TopologyIO({ name, description, nodes, edges, onImport }
         toast.success('JSON exportado!')
     }
 
-    /* ================= EXPORT PDF (imagem do canvas) ================= */
+    /* ================= EXPORT PDF (canvas image ) ================= */
     const handleExportPDF = async () => {
         const canvasElement = document.querySelector('canvas') as HTMLElement
 

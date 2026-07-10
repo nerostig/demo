@@ -73,7 +73,7 @@ export default function Dashboard() {
 
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-            {/* Hero */}
+            {/* Title */}
             <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                     <div>

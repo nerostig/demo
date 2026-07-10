@@ -1,6 +1,7 @@
 package com.example.demo
 
 import DutyCycleTreeOptimizer
+import HeuristicConfig
 
 
 import com.example.demo.domain.NetworkTopology
@@ -14,8 +15,141 @@ import com.example.demo.optimizer.gcd
 import computeSchedulesOptimized
 
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 import org.junit.jupiter.api.Assertions.*
+
+
+import com.example.demo.pipeline.DutyCycleParameter
+import com.example.demo.pipeline.PerformanceMetrics
+import com.example.demo.pipeline.Schedule
+import generateRandomTopology
+import usedMemoryKb
+
+
+    class NogoodLearningPerformanceTest {
+
+        private val runs = 1
+
+        @Test
+        fun `stable benchmark with and without nogood learningd`() {
+
+            val topology = generateRandomTopology(
+                sensorCount =20,
+                maxNeighbors = 4,
+                dutyCycleRange = 5.0..40.0,
+                tolerance = 0.5,
+                allCoprime = false
+            )
+
+            fun run(config: HeuristicConfig) =
+                computeSchedulesOptimized(topology, config)
+
+            fun warmUp() {
+                repeat(5) {
+                    run(HeuristicConfig(useNogoodLearning = true))
+                    run(HeuristicConfig(useNogoodLearning = false))
+                }
+            }
+
+            fun runMany(config: HeuristicConfig) =
+                (1..runs).map {
+                    System.gc()
+                    Thread.sleep(30)
+                    run(config)
+                }
+
+            fun Time(r: List<Pair<List<Schedule>, PerformanceMetrics>>) =
+                r.map { it.second.executionTimeMs }.last()
+
+            fun Memory(r: List<Pair<List<Schedule>, PerformanceMetrics>>) =
+                r.map { it.second.memoryUsedKb }.last()
+
+            fun Nulls(r: List<Pair<List<Schedule>, PerformanceMetrics>>) =
+                r.map { it.first.count { it.parameter == null } }.last()
+
+            warmUp()
+
+
+            val withResults = runMany(HeuristicConfig(useNogoodLearning = true))
+
+            val withoutResults = runMany(HeuristicConfig(useNogoodLearning = false))
+
+
+            println("\n=== WITHOUT NOGOOD ===")
+            println(" Time: ${Time(withoutResults)} ms")
+            println(" Memory: ${Memory(withoutResults)} KB")
+            println(" Nulls: ${Nulls(withoutResults)}")
+
+            println("\n=== WITH NOGOOD ===")
+            println(" Time: ${Time(withResults)} ms")
+            println(" Memory: ${Memory(withResults)} KB")
+            println(" Nulls: ${Nulls(withResults)}")
+        }
+
+    @Test
+    fun `stable benchmark with and without nogood learning`() {
+
+        val topology = generateRandomTopology(
+            sensorCount = 30,
+            maxNeighbors = 4,
+            dutyCycleRange = 5.0..40.0,
+            tolerance = 0.0,
+            allCoprime = true
+        )
+
+        fun run(config: HeuristicConfig): PerformanceMetrics {
+            System.gc()
+            Thread.sleep(50)
+
+            return computeSchedulesOptimized(topology, config).second
+        }
+
+        fun warmUp() {
+            repeat(5) {
+                run(HeuristicConfig(useNogoodLearning = true))
+                run(HeuristicConfig(useNogoodLearning = false))
+            }
+        }
+
+        fun runMany(config: HeuristicConfig): List<PerformanceMetrics> {
+            return (1..runs).map {
+                System.gc()
+                Thread.sleep(30)
+                run(config)
+            }
+        }
+
+        fun lastTime(metrics: List<PerformanceMetrics>) =
+            (metrics.map { it.executionTimeMs }.last())
+
+        fun lastMemory(metrics: List<PerformanceMetrics>) =
+            (metrics.map { it.memoryUsedKb }.last())
+
+        fun avgNulls(r: List<Pair<List<Schedule>, PerformanceMetrics>>) =
+            r.map { it.first.count { it.parameter == null } }.last()
+
+        warmUp()
+
+        val withResults = runMany(
+            HeuristicConfig(useNogoodLearning = true)
+        )
+
+        val withoutResults = runMany(
+            HeuristicConfig(useNogoodLearning = false)
+        )
+
+
+        println("\n=== WITHOUT NOGOOD ===")
+        println("last Time: ${lastTime(withoutResults)} ms")
+        println("last Memory: ${lastMemory(withoutResults)} KB")
+
+
+        println("\n=== WITH NOGOOD ===")
+        println("last Time: ${lastTime(withResults)} ms")
+        println("last Memory: ${lastMemory(withResults)} KB")
+    }
+}
+
+
 class DemoApplicationTestss {
 
     // ======================
@@ -158,7 +292,7 @@ class DemoApplicationTestss {
             )
         )
 
-        val optimizer = DutyCycleTreeOptimizer(topology, step = 1.0)
+        val optimizer = DutyCycleTreeOptimizer(topology)
         val result = optimizer.optimize()
 
         println("Resultado teste 1:")
@@ -188,7 +322,7 @@ class DemoApplicationTestss {
             )
         )
 
-        val optimizer = DutyCycleTreeOptimizer(topology, step = 1.0)
+        val optimizer = DutyCycleTreeOptimizer(topology)
         val result = optimizer.optimize()
 
         println("Resultado teste 2:")
@@ -224,7 +358,7 @@ class DemoApplicationTestss {
     )
     val topology = NetworkTopology(adjacency)
 
-    val optimizer = DutyCycleTreeOptimizer(topology, step = 5.0)
+    val optimizer = DutyCycleTreeOptimizer(topology)
 
     val result = optimizer.optimize()
 
@@ -258,11 +392,11 @@ class DemoApplicationTestss {
         val schedules = computeSchedulesOptimized(topology)
 
         println("\n=== Resultado teste tolerância pequena ===")
-        schedules.forEach {
+        schedules.first.forEach {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
-        assertTrue(schedules.any { it.parameter != null })
+        assertTrue(schedules.first.any { it.parameter != null })
     }
 
     @Test
@@ -281,14 +415,14 @@ class DemoApplicationTestss {
         val schedules = computeSchedulesOptimized(topology)
 
         println("\n=== Resultado teste A e B ===")
-        schedules.forEach {
+        schedules.first.forEach {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
         // pelo menos um deve ter solução
-        assertTrue(schedules.any { it.parameter != null })
+        assertTrue(schedules.first.any { it.parameter != null })
 
-        val assigned = schedules.filter { it.parameter != null }
+        val assigned = schedules.first.filter { it.parameter != null }
 
         if (assigned.size == 2) {
             val a = assigned.first { it.sensor == A }.parameter!!.value
@@ -327,13 +461,13 @@ class DemoApplicationTestss {
         val schedules = computeSchedulesOptimized(topology)
 
         println("\n=== Resultado teste tolerância maior ===")
-        schedules.forEach {
+        schedules.first.forEach {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
        // assertTrue(schedules.any { it.parameter == null })
 
-        assertTrue(schedules.any { it.parameter != null })
+        assertTrue(schedules.first.any { it.parameter != null })
     }
     @Test
     fun `computeSchedules topologia alternativa com tolerancia pequena`() {
@@ -357,16 +491,16 @@ class DemoApplicationTestss {
         val schedules = computeSchedulesOptimized(topology)
 
         println("\n=== Resultado teste topologia alternativa (tolerância pequena) ===")
-        schedules.forEach {
+        schedules.first.forEach {
             println("${it.sensor.id} -> ${it.parameter?.value}")
         }
 
         // Deve haver pelo menos um valor atribuído
-        assertTrue(schedules.any { it.parameter != null })
+        assertTrue(schedules.first.any { it.parameter != null })
 
         // Idealmente poucos nulls
-        val nullCount = schedules.count { it.parameter == null }
-        assertTrue(nullCount < schedules.size)
+        val nullCount = schedules.first.count { it.parameter == null }
+        assertTrue(nullCount < schedules.first.size)
     }
 
     @Test
@@ -386,7 +520,7 @@ class DemoApplicationTestss {
 
         val schedules = computeSchedulesOptimized(topology)
 
-        val nulls = schedules.count { it.parameter == null }
+        val nulls = schedules.first.count { it.parameter == null }
 
         // Espera-se solução completa
         assertEquals(0, nulls)
@@ -409,7 +543,7 @@ class DemoApplicationTestss {
 
         val schedules = computeSchedulesOptimized(topology)
 
-        val assigned = schedules.filter { it.parameter != null }
+        val assigned = schedules.first.filter { it.parameter != null }
 
         // Pelo menos A e B devem ser atribuídos
         assertTrue(assigned.size >= 2)
@@ -432,7 +566,7 @@ class DemoApplicationTestss {
 
         val schedules = computeSchedulesOptimized(topology)
 
-        val nulls = schedules.count { it.parameter == null }
+        val nulls = schedules.first.count { it.parameter == null }
         println(nulls)
 
         assertTrue(nulls == 2)

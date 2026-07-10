@@ -66,7 +66,6 @@ export default function NodePopup({
     if (top + POPUP_H > canvasSize.height - 8)
         top = node.y - POPUP_H - OFFSET
 
-    /* ================= RENDER ================= */
 
     return (
         <div

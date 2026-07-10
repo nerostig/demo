@@ -15,7 +15,6 @@ interface AlgorithmPanelProps {
     hasResult: boolean
 }
 
-/* ---------- Component ---------- */
 
 export default function AlgorithmPanel({
                                            onRun,
@@ -48,7 +47,7 @@ export default function AlgorithmPanel({
                     </p>
                 </div>
 
-                {/* Botoes */}
+                {/* Buttons */}
                 <div className="flex gap-2">
                     <Button
                         onClick={onRun}

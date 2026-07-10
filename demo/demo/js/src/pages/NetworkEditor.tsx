@@ -410,7 +410,6 @@ export default function NetworkEditor() {
     const selectedNode =
         nodes.find(n => n.id === selectedNodeId) ?? null
 
-    /* ---------- Render ---------- */
     const groups = nodes.reduce<Record<string, SensorNode[]>>((acc, node) => {
         if (!node.groupId) return acc
         acc[node.groupId] = acc[node.groupId] || []
@@ -442,7 +441,7 @@ export default function NetworkEditor() {
                     }}
                 />
                 <input
-                    className="border rounded px-2 py-1 text-sm"
+                    className="border rounded px-2 py-1 text-sm text-black"
                     placeholder="Nome da topologia"
                     value={topologyName}
                     onChange={(e) => setTopologyName(e.target.value)}
@@ -590,12 +589,30 @@ export default function NetworkEditor() {
                 </CardContent>
             </Card>
 
-            <DutyCycleTimeline
-                assignments={result?.sensors}
-                message={result?.message}
-                performance={result?.performance}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-sm">
+                        Resultado do Planeamento
+                    </CardTitle>
+                </CardHeader>
 
-            />
+                <CardContent>
+                    {isRunning ? (
+                        <div className="flex flex-col items-center justify-center py-10 gap-3">
+                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm text-muted-foreground">
+                                A calcular...
+                            </p>
+                        </div>
+                    ) : (
+                        <DutyCycleTimeline
+                            assignments={result?.sensors}
+                            message={result?.message}
+                            performance={result?.performance}
+                        />
+                    )}
+                </CardContent>
+            </Card>
         </div>
     )
 }

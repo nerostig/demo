@@ -3,6 +3,8 @@ plugins {
 	kotlin("plugin.spring") version "2.2.21"
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
+    id("me.champeau.jmh") version "0.7.2"
+
 }
 
 group = "com.example"
@@ -21,7 +23,15 @@ repositories {
 
 dependencies {
 
+    testImplementation("org.openjdk.jmh:jmh-core:1.37")
+    testAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+
    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    // To use Kotlin specific date and time functions
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+
+    // To get password encode
+    implementation("org.springframework.security:spring-security-core:6.5.4")
 
 
     implementation("org.jdbi:jdbi3-core:3.37.1")
@@ -36,6 +46,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
 
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+
+
 
 
 

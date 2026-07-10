@@ -17,7 +17,7 @@ interface NavItem {
     label: string
 }
 
-/* ---------- Data ---------- */
+/* ---------- navigation items ---------- */
 
 const navItems: NavItem[] = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -26,7 +26,6 @@ const navItems: NavItem[] = [
     { path: '/about', icon: Info, label: 'Sobre' },
 ]
 
-/* ---------- Component ---------- */
 
 export default function Sidebar(): JSX.Element {
     const location = useLocation()

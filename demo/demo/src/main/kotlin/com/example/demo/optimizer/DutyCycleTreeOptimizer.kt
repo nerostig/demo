@@ -1,35 +1,46 @@
 import com.example.demo.domain.NetworkTopology
-import com.example.demo.domain.ScheduledNetworkTopology
 import com.example.demo.domain.Sensor
 import com.example.demo.optimizer.GlobalNogoodStore
 import com.example.demo.optimizer.Nogood
 import com.example.demo.optimizer.SearchContext
-import com.example.demo.optimizer.areCoprime
 import com.example.demo.optimizer.areCoprimePercentages
-import com.example.demo.optimizer.dutyCycleToPeriod
 import com.example.demo.optimizer.generateCandidates
 import com.example.demo.optimizer.heuristics.impactOf
 import com.example.demo.optimizer.heuristics.nullRisk
 import com.example.demo.optimizer.heuristics.saturation
 import com.example.demo.optimizer.violatesNogood
 import com.example.demo.pipeline.DutyCycleParameter
+import com.example.demo.pipeline.PerformanceMetrics
 import com.example.demo.pipeline.Schedule
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.round
 import kotlin.math.sqrt
 
+data class HeuristicConfig(
+    val useMRV: Boolean = true,
+    val useDSatur: Boolean = true,
+    val useNullRisk: Boolean = true,
+    val useImpact: Boolean = true,
+    val useNogoodLearning: Boolean = true,
+    val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    val useparelism: Boolean=true
 
+)
 
 
 
 // ===================== ÁRVORE DE DECISÃO =====================
 
-
-class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val step: Double = 0.05) {
+class DutyCycleTreeOptimizer(
+    val topology: NetworkTopology,
+    private val config: HeuristicConfig = HeuristicConfig()) {
 
     private var bestCost = Double.MAX_VALUE
 
@@ -40,78 +51,64 @@ class DutyCycleTreeOptimizer(private val topology: NetworkTopology, private val 
     private var bestAssignment: Map<Sensor, Double?>? = null
     private val bestLock = Any()
 
-fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
-    val sensors = topology.sensors()
-        .sortedWith(
-            compareBy<Sensor> { generateCandidates(it).size }
-                .thenBy { topology.neighbors(it).size }
-        )
-
-    val domains = sensors
-        .associateWith { generateCandidates(it).toMutableList() }
-        .toMutableMap()
+    fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 
+        val sensors = topology.sensors()
+            .sortedWith(
+                compareBy<Sensor> { generateCandidates(it).size }
+                    .thenBy { topology.neighbors(it).size }
+            )
 
+        val domains = sensors
+            .associateWith { generateCandidates(it).toMutableList() }
+            .toMutableMap()
 
-
-    orderedSensorsPair = topology.sensors()
-        .map { sensor ->
-
-            val orderedNeighbors = topology.neighbors(sensor)
-                .sortedWith(
-                    compareBy<Sensor> { neighbor ->
-                        domains[neighbor]?.size ?: Int.MAX_VALUE
-                    }.thenByDescending { neighbor ->
-                        topology.neighbors(neighbor).size
-                    }
-                )
-
-            sensor to orderedNeighbors
-        }
-        .sortedWith(
-            compareBy<Pair<Sensor, List<Sensor>>> {
-                domains[it.first]?.size ?: Int.MAX_VALUE
-            }.thenByDescending {
-                it.second.size
+        orderedSensorsPair = topology.sensors()
+            .map { sensor ->
+                val orderedNeighbors = topology.neighbors(sensor)
+                    .sortedWith(
+                        compareBy<Sensor> { neighbor ->
+                            domains[neighbor]?.size ?: Int.MAX_VALUE
+                        }.thenByDescending { neighbor ->
+                            topology.neighbors(neighbor).size
+                        }
+                    )
+                sensor to orderedNeighbors
             }
-        )
+            .sortedWith(
+                compareBy<Pair<Sensor, List<Sensor>>> {
+                    domains[it.first]?.size ?: Int.MAX_VALUE
+                }.thenByDescending {
+                    it.second.size
+                }
+            )
 
 
+        sensors
+            .map { startSensor ->
 
+                async(config.dispatcher) {
 
+                    val ctx = SearchContext(globalNogoods)
+                    val assignment = mutableMapOf<Sensor, Double>()
 
-
-        sensors.map { startSensor ->
-            async(Dispatchers.Default) {
-
-                val ctx = SearchContext(globalNogoods)
-
-
-
-                val assignment = mutableMapOf<Sensor, Double>()
-
-                buildTree(
-                    sensor = startSensor, //sensors.first(),
-                    domains = domains,
-                    assignment = assignment,
-                    currentCost = 0.0,
-                    countSensor = 1,
-                    ctx = ctx
-                )
+                    buildTree(
+                        sensor = startSensor,
+                        domains = domains,
+                        assignment = assignment,
+                        currentCost = 0.0,
+                        countSensor = 1,
+                        ctx = ctx
+                    )
+                }
             }
-        }.awaitAll()
+            .awaitAll()
 
 
-
-
-    // resultado global protegido
-    bestAssignment
-}
-
-
-
+        bestAssignment
+    }
 
     private fun tryUpdate(
         assignment: Map<Sensor, Double>,
@@ -135,11 +132,6 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 
 
-
-
-
-
-
     private fun buildTree(
         sensor: Sensor,
         domains: MutableMap<Sensor, MutableList<Int>>,
@@ -157,14 +149,13 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
         val sortedDomain = domain.sortedWith(
             compareBy<Int> { period ->
-                impactOf(sensor, period, domains, assignment, ctx,topology)
+                if (config.useImpact)
+                    impactOf(sensor, period, domains, assignment, ctx, topology)
+                else 0.0
             }.thenBy { period ->
                 abs(round(100.0 / period) - sensor.desiredDutyCycle)
             }
         )
-
-
-
 
         for (period in sortedDomain) {
             val percentage = round(100.0 / period)//round(100.0 / period)
@@ -174,7 +165,8 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 
 
-            if (violatesNogood(assignment, ctx)) {
+
+            if (config.useNogoodLearning && violatesNogood(sensor,assignment, ctx)) {
                 assignment.remove(sensor)
                 continue
             }
@@ -190,6 +182,7 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
                 assignment.remove(sensor)
                 continue
             }
+
 
             // Verificação de coprimalidade local
             val valid = topology.neighbors(sensor)
@@ -210,11 +203,20 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
                 val nogood = Nogood(conflict)
 
-                //  Aprendizagem local
-                ctx.localNogoods.add(nogood)
 
-                //  Aprendizagem global
-                globalNogoods.add(nogood)
+                if (config.useNogoodLearning ) {
+
+
+                    //  Aprendizagem local
+
+                    ctx.addLocalNogood(nogood)
+                    //  Aprendizagem global
+
+                    globalNogoods.add(nogood)
+
+
+
+                }
 
                 assignment.remove(sensor)
                 continue
@@ -222,7 +224,11 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 
 
+
+
             tryUpdate(assignment, newSquaredCost)
+
+
 
 
 
@@ -234,13 +240,13 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
                 .filter { it !in assignment }
                 .sortedWith(
                     compareByDescending<Sensor> { s ->
-                        saturation(topology,s, assignment)   //  DSatur
+                        if (config.useDSatur) saturation(topology,s, assignment) else 0.0   //  DSatur
                     }.thenBy { s ->
-                        domains[s]?.size ?: Int.MAX_VALUE // MRV
+                        if (config.useMRV) domains[s]?.size ?: Int.MAX_VALUE else 0 // MRV
                     }.thenByDescending { s ->
                         topology.neighbors(s).size //
                     }.thenByDescending { s ->
-                        nullRisk(topology,s, assignment) //
+                        if (config.useNullRisk) nullRisk(topology,s, assignment) else 0//
                     }
                 )
                 .toList()
@@ -260,6 +266,7 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
             }
 
 
+
             assignment.remove(sensor)
         }
     }
@@ -272,23 +279,39 @@ fun optimize(): Map<Sensor, Double?>? = runBlocking {
 
 }
 
-
+ fun usedMemoryKb(): Long {
+    val rt = Runtime.getRuntime()
+    return (rt.totalMemory() - rt.freeMemory()) / 1024
+}
 
 // ===================== API =====================
-fun computeSchedulesOptimized(topology: NetworkTopology): List<Schedule> {
+fun computeSchedulesOptimized(topology: NetworkTopology, config: HeuristicConfig = HeuristicConfig()): Pair<List<Schedule>, PerformanceMetrics> {
 
 
+    val memBefore = usedMemoryKb()
+    val start = System.nanoTime()
 
-    val optimizer = DutyCycleTreeOptimizer(topology)
+
+    val optimizer = DutyCycleTreeOptimizer(topology,config)
     val solution = optimizer.optimize()
 
+    val end = System.nanoTime()
+    val memAfter = usedMemoryKb()
+
+    val metrics = PerformanceMetrics(
+        executionTimeMs = (end - start) / 1_000_000,
+        memoryUsedKb = memAfter - memBefore
+    )
 
 
-
-    return topology.sensors().map { sensor ->
+    val schedules= topology.sensors().map { sensor ->
         val value = solution?.get(sensor)
         if (value != null) Schedule(sensor, DutyCycleParameter(value)) else Schedule(sensor, null)
     }
+
+    return Pair(schedules,metrics)
+
+
 }
 
 

@@ -1,10 +1,25 @@
+create table Users(
+id int generated always as identity primary key,
+username VARCHAR(64) unique not null,
+password_validation VARCHAR(256) not null
+);
+
+create table Tokens(
+token_validation VARCHAR(256) primary key,
+user_id int references Users(id),
+created_at bigint not null,
+last_used_at bigint not null
+);
+
+
 CREATE TABLE IF NOT EXISTS topologies (
 id SERIAL PRIMARY KEY,
+user_id INT NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
 name TEXT
 );
 
 -- =========================
--- SENSORS (corrigido)
+-- SENSORS
 -- =========================
 CREATE TABLE IF NOT EXISTS sensors (
 id TEXT NOT NULL,
