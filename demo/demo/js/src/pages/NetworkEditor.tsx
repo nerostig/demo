@@ -110,7 +110,6 @@ async function runAlgorithm(
     return res.json()
 }
 
-/* ===================== COMPONENT ===================== */
 
 export default function NetworkEditor() {
     const { id } = useParams<{ id: string }>()
@@ -547,7 +546,7 @@ export default function NetworkEditor() {
                         </p>
                     )}
 
-                    {/* Grupos */}
+                    {/* Groups */}
                     {Object.entries(groups).map(([groupId, sensors]) => (
                         <div key={groupId} className="border rounded-lg p-3">
                             <div className="text-xs font-semibold mb-2">
@@ -567,7 +566,7 @@ export default function NetworkEditor() {
                         </div>
                     ))}
 
-                    {/* Sensores sem grupo */}
+                    {/* Sensors whitout group */}
                     {ungrouped.length > 0 && (
                         <div className="border rounded-lg p-3">
                             <div className="text-xs font-semibold mb-2">

@@ -74,7 +74,7 @@ export default function NodePopup({
             style={{ left, top, width: POPUP_W }}
             onMouseDown={e => e.stopPropagation()}
         >
-            {/* HEADER */}
+            {/* Header */}
             <div className="flex justify-between items-center">
                 <span className="text-xs font-semibold">Sensor</span>
                 <div className="flex gap-1">
@@ -100,7 +100,7 @@ export default function NodePopup({
                 </div>
             </div>
 
-            {/* DUTY CYCLE */}
+            {/* Duty cycle */}
             <div className="space-y-1">
                 <div className="text-xs flex justify-between">
                     <span>Duty cycle</span>
@@ -121,7 +121,7 @@ export default function NodePopup({
                 />
             </div>
 
-            {/* TOLERANCE */}
+            {/* Tolerance */}
             <div className="space-y-1">
                 <label className="text-xs">Tolerância</label>
                 <Input

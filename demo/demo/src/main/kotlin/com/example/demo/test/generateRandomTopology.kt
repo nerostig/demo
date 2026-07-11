@@ -82,7 +82,6 @@ fun generateRandomTopology(
         }
     }
 
-    // 4️ Converter para Map<Sensor, List<Sensor>>
     val finalAdjacency = adjacency.mapValues { it.value.toList() }
 
     return NetworkTopology(finalAdjacency)

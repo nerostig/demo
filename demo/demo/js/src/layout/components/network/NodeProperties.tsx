@@ -32,7 +32,7 @@ export default function NodeProperties({
 
     return (
         <div className="space-y-4">
-            {/* HEADER */}
+            {/*  */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">
                     Sensor: {node.id}
@@ -48,7 +48,7 @@ export default function NodeProperties({
                 </Button>
             </div>
 
-            {/* DUTY CYCLE */}
+            {/* Duty cycle */}
             <div className="space-y-2">
                 <Label className="text-xs">
                     Duty cycle desejado: {dutyPercent}%
@@ -67,7 +67,7 @@ export default function NodeProperties({
                 />
             </div>
 
-            {/* TOLERÂNCIA */}
+            {/* Tolerance */}
             <div className="space-y-2">
                 <Label className="text-xs">Tolerância</Label>
                 <Input
@@ -84,7 +84,7 @@ export default function NodeProperties({
                 />
             </div>
 
-            {/* POSIÇÃO */}
+            {/* Position */}
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>X: {Math.round(node.x)}</div>
                 <div>Y: {Math.round(node.y)}</div>

@@ -173,7 +173,7 @@ export default function TopologyIO({ name, description, nodes, edges, onImport }
 
             <CardContent className="space-y-2">
 
-                {/* INPUTS */}
+                {/* Inputs */}
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -190,7 +190,7 @@ export default function TopologyIO({ name, description, nodes, edges, onImport }
                     onChange={handleImportSVG}
                 />
 
-                {/* BUTTONS */}
+                {/* Buttons */}
                 <Button onClick={() => fileInputRef.current?.click()} variant="outline">
                     <Upload className="w-4 h-4 mr-2" />
                     Importar JSON
