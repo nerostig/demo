@@ -249,9 +249,19 @@ class JdbiTopologyRepository(
             .bind("name", topology.name)
             .execute()
 
-        val newSensors =
-            (topology.adjacency.keys + topology.adjacency.values.flatten())
-                .distinctBy { it.id }
+        val newSensors = mutableListOf<Sensor>()
+
+        topology.adjacency.keys.forEach { sensor ->
+            newSensors.add(sensor)
+        }
+
+        topology.adjacency.values.forEach { targets ->
+            targets.forEach { sensor ->
+                if (newSensors.none { it.id == sensor.id }) {
+                    newSensors.add(sensor)
+                }
+            }
+        }
 
         val existingIds = handle.createQuery(
             """
