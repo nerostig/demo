@@ -219,22 +219,6 @@ class JdbiTopologyRepository(
         userId: Int
     ): ScheduledNetworkTopology {
 
-        val exists = handle.createQuery(
-            """
-        SELECT 1
-        FROM topologies
-        WHERE id = :id
-          AND user_id = :uid
-        """
-        )
-            .bind("id", id)
-            .bind("uid", userId)
-            .mapTo(Int::class.java)
-            .findOne()
-            .isPresent
-
-        if (!exists)
-            throw TopologyNotFoundException(id)
 
         handle.createUpdate(
             """
