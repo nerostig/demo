@@ -50,36 +50,3 @@ class SearchContext(val globalNogoods: GlobalNogoodStore) {
 
 
 
-//    fun addLocalNogood(nogood: Nogood) {
-//        nogood.assignments.keys.forEach { s ->
-//            localNogoodIndex.getOrPut(s) { mutableListOf() }.add(nogood)
-//        }
-//    }
-
-//// 2
-//    fun addLocalNogood(nogood: Nogood) {
-//        nogood.assignments.keys.forEach { s ->
-//            val list = localNogoodIndex.getOrPut(s) { mutableListOf() }
-//            // insere ordenado por tamanho crescente
-//            val idx = list.indexOfFirst { it.assignments.size > nogood.assignments.size }
-//            if (idx == -1) list.add(nogood) else list.add(idx, nogood)
-//        }
-//    }
-
-
-//class SearchContextdd(
-//    var globalNogoods: GlobalNogoodStore,
-//    var coprimeCache: Map<Pair<Double, Double>, Boolean> = emptyMap(),
-//    var impactCache: Map<Triple<Sensor, Int, Sensor>, Int> = emptyMap(),
-//    var localNogoods: List<Nogood> = emptyList()
-//) {
-//
-//    fun copyWithCoprime(key: Pair<Double, Double>, value: Boolean): SearchContext {
-//        return SearchContextdd(
-//            globalNogoods = globalNogoods,
-//            coprimeCache = coprimeCache + (key to value),
-//            impactCache = impactCache,
-//            localNogoods = localNogoods
-//        )
-//    }
-//}

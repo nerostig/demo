@@ -1,6 +1,5 @@
 package com.example.demo.services
 
-import com.example.demo.domain.SimulationOutput
 import com.example.demo.domain.TopologyPlanner
 import com.example.demo.domain.toOutput
 import com.example.demo.domain.toResponse

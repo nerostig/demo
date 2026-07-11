@@ -17,7 +17,7 @@ class JdbiTopologyRepository(
 
 
         val topologyId = handle.createUpdate(
-            "INSERT INTO topologies(user_id, name) VALUES (:uid, :name)" //"INSERT INTO topologies(name) VALUES (:name)"
+            "INSERT INTO topologies(user_id, name) VALUES (:uid, :name)"
         )
             .bind("uid", userId)
             .bind("name", topology.name)
@@ -211,10 +211,21 @@ class JdbiTopologyRepository(
     }
 
     /* ================= UPDATE ================= */
-    override fun update(id: Int, topology: ScheduledNetworkTopology,userId: Int): ScheduledNetworkTopology {
+
+
+    override fun update(
+        id: Int,
+        topology: ScheduledNetworkTopology,
+        userId: Int
+    ): ScheduledNetworkTopology {
 
         val exists = handle.createQuery(
-            "SELECT 1 FROM topologies WHERE id = :id AND user_id = :uid"
+            """
+        SELECT 1
+        FROM topologies
+        WHERE id = :id
+          AND user_id = :uid
+        """
         )
             .bind("id", id)
             .bind("uid", userId)
@@ -222,34 +233,70 @@ class JdbiTopologyRepository(
             .findOne()
             .isPresent
 
-        if (!exists) throw TopologyNotFoundException(id)
+        if (!exists)
+            throw TopologyNotFoundException(id)
 
         handle.createUpdate(
-            "UPDATE topologies SET name = :name WHERE id = :id AND user_id = :uid"
+            """
+        UPDATE topologies
+        SET name = :name
+        WHERE id = :id
+          AND user_id = :uid
+        """
         )
             .bind("id", id)
             .bind("uid", userId)
             .bind("name", topology.name)
             .execute()
 
-        handle.createUpdate("DELETE FROM edges WHERE topology_id = :id")
-            .bind("id", id)
-            .execute()
+        val newSensors =
+            (topology.adjacency.keys + topology.adjacency.values.flatten())
+                .distinctBy { it.id }
 
-        handle.createUpdate("DELETE FROM duty_cycles WHERE topology_id = :id")
-            .bind("id", id)
-            .execute()
+        val existingIds = handle.createQuery(
+            """
+        SELECT id
+        FROM sensors
+        WHERE topology_id = :tid
+        """
+        )
+            .bind("tid", id)
+            .mapTo(String::class.java)
+            .list()
 
-        topology.adjacency.keys.forEach { sensor ->
-            handle.createUpdate(
+        val newIds = newSensors.map { it.id }
+
+
+        existingIds
+            .filter { it !in newIds }
+            .forEach { sensorId ->
+
+                handle.createUpdate(
+                    """
+                DELETE FROM sensors
+                WHERE topology_id = :tid
+                  AND id = :sid
+                """
+                )
+                    .bind("tid", id)
+                    .bind("sid", sensorId)
+                    .execute()
+            }
+
+
+        newSensors.forEach { sensor ->
+
+            val updated = handle.createUpdate(
                 """
             UPDATE sensors
-            SET group_id = :groupId,
+            SET
+                group_id = :groupId,
                 x = :x,
                 y = :y,
                 desired_duty_cycle = :duty,
                 tolerance = :tol
-            WHERE topology_id = :tid AND id = :sid
+            WHERE topology_id = :tid
+              AND id = :sid
             """
             )
                 .bind("tid", id)
@@ -260,14 +307,65 @@ class JdbiTopologyRepository(
                 .bind("duty", sensor.desiredDutyCycle)
                 .bind("tol", sensor.tolerance)
                 .execute()
+
+            if (updated == 0) {
+
+                handle.createUpdate(
+                    """
+                INSERT INTO sensors(
+                    id,
+                    topology_id,
+                    group_id,
+                    x,
+                    y,
+                    desired_duty_cycle,
+                    tolerance
+                )
+                VALUES(
+                    :sid,
+                    :tid,
+                    :groupId,
+                    :x,
+                    :y,
+                    :duty,
+                    :tol
+                )
+                """
+                )
+                    .bind("sid", sensor.id)
+                    .bind("tid", id)
+                    .bind("groupId", sensor.groupid)
+                    .bind("x", sensor.x)
+                    .bind("y", sensor.y)
+                    .bind("duty", sensor.desiredDutyCycle)
+                    .bind("tol", sensor.tolerance)
+                    .execute()
+            }
         }
+
+
+
+        handle.createUpdate(
+            "DELETE FROM edges WHERE topology_id = :tid"
+        )
+            .bind("tid", id)
+            .execute()
 
         topology.adjacency.forEach { (src, targets) ->
             targets.forEach { tgt ->
+
                 handle.createUpdate(
                     """
-                INSERT INTO edges(topology_id, source_id, target_id)
-                VALUES (:tid, :src, :tgt)
+                INSERT INTO edges(
+                    topology_id,
+                    source_id,
+                    target_id
+                )
+                VALUES(
+                    :tid,
+                    :src,
+                    :tgt
+                )
                 """
                 )
                     .bind("tid", id)
@@ -277,11 +375,28 @@ class JdbiTopologyRepository(
             }
         }
 
+
+
+        handle.createUpdate(
+            "DELETE FROM duty_cycles WHERE topology_id = :tid"
+        )
+            .bind("tid", id)
+            .execute()
+
         topology.dutyCycles.forEach { (sensor, value) ->
+
             handle.createUpdate(
                 """
-            INSERT INTO duty_cycles(topology_id, sensor_id, value)
-            VALUES (:tid, :sid, :value)
+            INSERT INTO duty_cycles(
+                topology_id,
+                sensor_id,
+                value
+            )
+            VALUES(
+                :tid,
+                :sid,
+                :value
+            )
             """
             )
                 .bind("tid", id)
@@ -290,7 +405,7 @@ class JdbiTopologyRepository(
                 .execute()
         }
 
-        return findById(id,userId)
+        return findById(id, userId)
             ?: throw TopologyNotFoundException(id)
     }
 }

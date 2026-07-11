@@ -64,17 +64,16 @@ class RequestTokenProcessor(
         }
 
 
-        //val tokenBytes = Base64.getUrlDecoder().decode(parts[1]).toString()
-        //println("tokenBytes $tokenBytes")
+
         val userEntity = usersService.getUserByToken(parts[1])
-        println("userEntity from service: $userEntity")
+        //println("userEntity from service: $userEntity")
         return try {
             userEntity?.let {
                 // println("Inside let: $it")
                 AuthenticatedUser(it, parts[1])
             }
         } catch (e: Exception) {
-            println("Exception creating AuthenticatedUser: ${e.message}")
+            //println("Exception creating AuthenticatedUser: ${e.message}")
             e.printStackTrace()
             null
         }

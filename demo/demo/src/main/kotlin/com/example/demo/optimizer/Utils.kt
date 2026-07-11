@@ -39,32 +39,8 @@ fun areCoprimePercentages(
     }
 }
 
-//fun areCoprimePercentages(
-//    p1: Double,
-//    p2: Double,
-//    ctx: SearchContext
-//): Boolean {
-//
-//    val key = p1 to p2
-//    ctx.coprimeCache[key]?.let {
-//        return it
-//    }
-//
-//    val result = areCoprime(
-//        dutyCycleToPeriod(p1),
-//        dutyCycleToPeriod(p2)
-//    )
-//
-//    val newCtx = ctx.copyWithCoprime(key, result)
-//
-//
-//    return result
-//}
 
 
-
-
-// =====================  =====================
 
 
 
