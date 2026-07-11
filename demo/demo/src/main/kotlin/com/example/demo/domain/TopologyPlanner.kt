@@ -1,6 +1,5 @@
 package com.example.demo.domain
 
-import com.example.demo.pipeline.LinkOutput
 import com.example.demo.pipeline.PerformanceMetrics
 import com.example.demo.pipeline.Schedule
 import com.example.demo.pipeline.ScheduledTopologyOutput
